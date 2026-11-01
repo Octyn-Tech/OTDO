@@ -388,26 +388,36 @@ export function WidgetGrid({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-baseline justify-between">
-                <div className="text-3xl font-mono font-bold tracking-tight">
-                  {cpuVal.toFixed(1)}%
-                </div>
-                <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
-                  {cpuVal > 80 ? 'Heavy Load' : 'Optimal'}
-                </Badge>
-              </div>
+              {style !== 'radial' ? (
+                <>
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-3xl font-mono font-bold tracking-tight">
+                      {cpuVal.toFixed(1)}%
+                    </div>
+                    <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
+                      {cpuVal > 80 ? 'Heavy Load' : 'Optimal'}
+                    </Badge>
+                  </div>
 
-              {style === 'bar' && (
-                <Progress value={cpuVal} className="h-1.5 bg-muted" />
-              )}
-              {style === 'wave' && (
-                <SparklineChart data={history.cpu} maxVal={100} unit="%" height={size === '1x' ? 48 : 64} />
-              )}
-              {style === 'radial' && (
-                <RadialGauge value={cpuVal} max={100} size={74} label="CPU %" />
-              )}
-              {style === 'blocks' && (
-                <SegmentedBlocks value={cpuVal} max={100} segments={16} />
+                  {style === 'bar' && (
+                    <Progress value={cpuVal} className="h-1.5 bg-muted" />
+                  )}
+                  {style === 'wave' && (
+                    <SparklineChart data={history.cpu} maxVal={100} unit="%" height={size === '1x' ? 48 : 64} />
+                  )}
+                  {style === 'blocks' && (
+                    <SegmentedBlocks value={cpuVal} max={100} segments={16} />
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center pt-1 pb-1">
+                  <RadialGauge value={cpuVal} max={100} size={size === '1x' ? 84 : 100} label="CPU %" />
+                  <div className="mt-2.5">
+                    <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
+                      {cpuVal > 80 ? 'Heavy Load' : 'Optimal'}
+                    </Badge>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -469,26 +479,36 @@ export function WidgetGrid({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-baseline justify-between">
-                <div className="text-3xl font-mono font-bold tracking-tight">
-                  {memVal.toFixed(1)}%
-                </div>
-                <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
-                  {memVal > 85 ? 'High Usage' : 'Normal'}
-                </Badge>
-              </div>
+              {style !== 'radial' ? (
+                <>
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-3xl font-mono font-bold tracking-tight">
+                      {memVal.toFixed(1)}%
+                    </div>
+                    <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
+                      {memVal > 85 ? 'High Usage' : 'Normal'}
+                    </Badge>
+                  </div>
 
-              {style === 'bar' && (
-                <Progress value={memVal} className="h-1.5 bg-muted" />
-              )}
-              {style === 'wave' && (
-                <SparklineChart data={history.memory} maxVal={100} unit="%" height={size === '1x' ? 48 : 64} />
-              )}
-              {style === 'radial' && (
-                <RadialGauge value={memVal} max={100} size={74} label="RAM %" />
-              )}
-              {style === 'blocks' && (
-                <SegmentedBlocks value={memVal} max={100} segments={16} />
+                  {style === 'bar' && (
+                    <Progress value={memVal} className="h-1.5 bg-muted" />
+                  )}
+                  {style === 'wave' && (
+                    <SparklineChart data={history.memory} maxVal={100} unit="%" height={size === '1x' ? 48 : 64} />
+                  )}
+                  {style === 'blocks' && (
+                    <SegmentedBlocks value={memVal} max={100} segments={16} />
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center pt-1 pb-1">
+                  <RadialGauge value={memVal} max={100} size={size === '1x' ? 84 : 100} label="RAM %" />
+                  <div className="mt-2.5">
+                    <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
+                      {memVal > 85 ? 'High Usage' : 'Normal'}
+                    </Badge>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -550,26 +570,36 @@ export function WidgetGrid({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-baseline justify-between">
-                <div className="text-3xl font-mono font-bold tracking-tight">
-                  {diskVal.toFixed(1)}%
-                </div>
-                <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
-                  Mounted /
-                </Badge>
-              </div>
+              {style !== 'radial' ? (
+                <>
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-3xl font-mono font-bold tracking-tight">
+                      {diskVal.toFixed(1)}%
+                    </div>
+                    <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
+                      Mounted /
+                    </Badge>
+                  </div>
 
-              {style === 'bar' && (
-                <Progress value={diskVal} className="h-1.5 bg-muted" />
-              )}
-              {style === 'wave' && (
-                <SparklineChart data={history.disk} maxVal={100} unit="%" height={size === '1x' ? 48 : 64} />
-              )}
-              {style === 'radial' && (
-                <RadialGauge value={diskVal} max={100} size={74} label="Disk %" />
-              )}
-              {style === 'blocks' && (
-                <SegmentedBlocks value={diskVal} max={100} segments={16} />
+                  {style === 'bar' && (
+                    <Progress value={diskVal} className="h-1.5 bg-muted" />
+                  )}
+                  {style === 'wave' && (
+                    <SparklineChart data={history.disk} maxVal={100} unit="%" height={size === '1x' ? 48 : 64} />
+                  )}
+                  {style === 'blocks' && (
+                    <SegmentedBlocks value={diskVal} max={100} segments={16} />
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center pt-1 pb-1">
+                  <RadialGauge value={diskVal} max={100} size={size === '1x' ? 84 : 100} label="Disk %" />
+                  <div className="mt-2.5">
+                    <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
+                      Mounted /
+                    </Badge>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -921,26 +951,36 @@ export function WidgetGrid({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-baseline justify-between">
-                <div className="text-3xl font-mono font-bold tracking-tight">
-                  {qSize} <span className="text-sm font-normal text-muted-foreground">/ {qMax}</span>
-                </div>
-                <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
-                  {qSize > 0 ? 'Active Queue' : 'Buffer Idle'}
-                </Badge>
-              </div>
+              {style !== 'radial' ? (
+                <>
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-3xl font-mono font-bold tracking-tight">
+                      {qSize} <span className="text-sm font-normal text-muted-foreground">/ {qMax}</span>
+                    </div>
+                    <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
+                      {qSize > 0 ? 'Active Queue' : 'Buffer Idle'}
+                    </Badge>
+                  </div>
 
-              {style === 'bar' && (
-                <Progress value={qPct} className="h-1.5 bg-muted" />
-              )}
-              {style === 'wave' && (
-                <SparklineChart data={history.queue} maxVal={qMax} unit=" items" height={size === '1x' ? 48 : 64} />
-              )}
-              {style === 'radial' && (
-                <RadialGauge value={qSize} max={qMax} size={74} label="items" />
-              )}
-              {style === 'blocks' && (
-                <SegmentedBlocks value={qSize} max={qMax} segments={16} />
+                  {style === 'bar' && (
+                    <Progress value={qPct} className="h-1.5 bg-muted" />
+                  )}
+                  {style === 'wave' && (
+                    <SparklineChart data={history.queue} maxVal={qMax} unit=" items" height={size === '1x' ? 48 : 64} />
+                  )}
+                  {style === 'blocks' && (
+                    <SegmentedBlocks value={qSize} max={qMax} segments={16} />
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center pt-1 pb-1">
+                  <RadialGauge value={qSize} max={qMax} size={size === '1x' ? 84 : 100} label={`/ ${qMax}`} />
+                  <div className="mt-2.5">
+                    <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
+                      {qSize > 0 ? 'Active Queue' : 'Buffer Idle'}
+                    </Badge>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
