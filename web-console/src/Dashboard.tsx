@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Layers,
   LogOut,
   Plus,
   RefreshCw,
@@ -166,26 +165,6 @@ export default function Dashboard() {
               <span className="font-semibold text-sm tracking-tight">OTDO System, All in One</span>
               <Badge variant="outline" className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border-border">
                 v1.0
-              </Badge>
-            </div>
-
-            {/* Center Connection Status */}
-            <div className="hidden md:flex items-center gap-2">
-              <Badge
-                variant={isOnline ? 'outline' : 'destructive'}
-                className="px-2.5 py-1 text-xs font-mono font-medium flex items-center gap-1.5 border-border"
-              >
-                <span
-                  className={`h-2 w-2 rounded-full ${
-                    isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse' : 'bg-red-500'
-                  }`}
-                />
-                {isOnline ? 'NODE CONNECTED' : 'BACKEND OFFLINE'}
-              </Badge>
-
-              <Badge variant="secondary" className="px-2.5 py-1 text-xs font-mono">
-                <Layers className="h-3 w-3 mr-1 opacity-70" />
-                Queue: {queueInfo.queue_size} / {queueInfo.max_size}
               </Badge>
             </div>
 
