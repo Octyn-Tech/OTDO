@@ -82,6 +82,15 @@ export default function Dashboard() {
     });
   };
 
+  const handleReorder = (newOrder: string[]) => {
+    setActiveWidgetIds(newOrder);
+    try {
+      localStorage.setItem(WIDGETS_STORAGE_KEY, JSON.stringify(newOrder));
+    } catch {
+      // ignore storage error
+    }
+  };
+
   const handleRemoveWidget = (id: string) => {
     setActiveWidgetIds((prev) => {
       const next = prev.filter((item) => item !== id);
@@ -239,6 +248,7 @@ export default function Dashboard() {
           {/* Dynamic Widget Grid Canvas */}
           <WidgetGrid
             activeWidgetIds={activeWidgetIds}
+            onReorder={handleReorder}
             onOpenAddModal={() => setIsAddWidgetOpen(true)}
             metric={latestMetric}
             queueInfo={queueInfo}

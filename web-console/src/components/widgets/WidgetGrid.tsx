@@ -6,20 +6,18 @@ import {
   ArrowUp,
   BarChart2,
   CheckCircle2,
-  CircleDot,
   Clock,
   Cpu,
   Database,
   Gauge,
+  GripVertical,
   HardDrive,
   Layers,
   Maximize2,
   Minimize2,
-  Network,
   Plus,
   Radio,
   Server,
-  SlidersHorizontal,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +50,7 @@ interface QueueStatus {
 
 interface WidgetGridProps {
   activeWidgetIds: string[];
+  onReorder: (newOrder: string[]) => void;
   onOpenAddModal: () => void;
   metric: MetricData | null;
   queueInfo: QueueStatus;
@@ -97,6 +96,7 @@ function formatUptime(seconds: number = 0): string {
 
 export function WidgetGrid({
   activeWidgetIds,
+  onReorder,
   onOpenAddModal,
   metric,
   queueInfo,
@@ -111,6 +111,10 @@ export function WidgetGrid({
       return {};
     }
   });
+
+  // Cursor drag-and-drop reordering state
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   // Rolling metric history for live wave/sparkline charts (last 20 samples)
   const [history, setHistory] = useState<{
@@ -183,6 +187,97 @@ export function WidgetGrid({
     return defaultSpan;
   };
 
+  // Cursor drag-to-resize handler
+  const handleResizeStart = (widgetId: string, startEvent: React.MouseEvent) => {
+    startEvent.preventDefault();
+    startEvent.stopPropagation();
+
+    const startX = startEvent.clientX;
+    const currentSize = customizations[widgetId]?.size || '1x';
+    let lastSize = currentSize;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      let targetSize: WidgetSize = currentSize;
+
+      if (currentSize === '1x') {
+        if (deltaX > 220) targetSize = '4x';
+        else if (deltaX > 80) targetSize = '2x';
+      } else if (currentSize === '2x') {
+        if (deltaX > 160) targetSize = '4x';
+        else if (deltaX < -80) targetSize = '1x';
+      } else if (currentSize === '4x') {
+        if (deltaX < -220) targetSize = '1x';
+        else if (deltaX < -80) targetSize = '2x';
+      }
+
+      if (targetSize !== lastSize) {
+        lastSize = targetSize;
+        updateCustomization(widgetId, { size: targetSize });
+      }
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.body.style.cursor = 'se-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
+  // Drag and drop reordering handlers
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData('text/plain', id);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggedId(id);
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverId !== id) {
+      setDragOverId(id);
+    }
+  };
+
+  const handleDragLeave = (_e: React.DragEvent, id: string) => {
+    if (dragOverId === id) {
+      setDragOverId(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const sourceIndex = activeWidgetIds.indexOf(draggedId);
+    const targetIndex = activeWidgetIds.indexOf(targetId);
+
+    if (sourceIndex !== -1 && targetIndex !== -1) {
+      const newOrder = [...activeWidgetIds];
+      newOrder.splice(sourceIndex, 1);
+      newOrder.splice(targetIndex, 0, draggedId);
+      onReorder(newOrder);
+    }
+
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
   if (activeWidgetIds.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 border border-dashed border-border/80 rounded-xl bg-card/20 text-center space-y-4 my-8">
@@ -207,39 +302,56 @@ export function WidgetGrid({
     );
   }
 
-  // Active flags
-  const hasCpu = activeWidgetIds.includes('cpu');
-  const hasMemory = activeWidgetIds.includes('memory');
-  const hasDisk = activeWidgetIds.includes('disk');
-  const hasNetwork = activeWidgetIds.includes('network');
-  const hasDiskIo = activeWidgetIds.includes('disk_io');
-  const hasDatabase = activeWidgetIds.includes('database');
-  const hasUptime = activeWidgetIds.includes('uptime_tasks');
-  const hasQueue = activeWidgetIds.includes('queue');
+  // Common resize handle component
+  const renderResizeHandle = (widgetId: string) => (
+    <div
+      title="Click or drag cursor horizontally to resize (1x · 2x · Full)"
+      onMouseDown={(e) => handleResizeStart(widgetId, e)}
+      onClick={(e) => {
+        e.stopPropagation();
+        cycleSize(widgetId);
+      }}
+      className="absolute bottom-1 right-1 p-1 rounded-sm cursor-se-resize select-none text-muted-foreground/30 hover:text-foreground hover:bg-muted/40 transition-all opacity-0 group-hover:opacity-100 z-10"
+    >
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-current">
+        <line x1="8" y1="2" x2="2" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="8" y1="5.5" x2="5.5" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
 
-  const hasPipeline = activeWidgetIds.includes('pipeline');
-  const hasNode = activeWidgetIds.includes('node');
-  const hasTelemetryFrame = activeWidgetIds.includes('telemetry_frame');
+  // Common drag handle
+  const renderDragHandle = () => (
+    <div
+      title="Drag to reorder card"
+      className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-foreground transition-colors mr-1 -ml-1 p-0.5 rounded-sm"
+    >
+      <GripVertical className="h-4 w-4" />
+    </div>
+  );
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 auto-rows-fr">
-      {/* 1. CPU Card */}
-      {hasCpu && (() => {
+  // Render individual widget by ID
+  const renderWidgetContent = (widgetId: string) => {
+    switch (widgetId) {
+      case 'cpu': {
         const style = customizations['cpu']?.style || 'bar';
         const size = customizations['cpu']?.size || '1x';
         const cpuVal = metric?.cpu_usage ?? 0;
 
         return (
-          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('cpu')} group`}>
+          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('cpu')} group relative`}>
+            {renderResizeHandle('cpu')}
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div>
-                <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
-                  CPU Utilization
-                </CardTitle>
-                <CardDescription className="text-[11px]">System compute core load</CardDescription>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground truncate">
+                    CPU Utilization
+                  </CardTitle>
+                  <CardDescription className="text-[11px] truncate">System compute core load</CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                {/* Style Switcher */}
+              <div className="flex items-center gap-1 shrink-0">
                 <Tooltip>
                   <TooltipTrigger render={
                     <button
@@ -251,11 +363,10 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Chart Style: {style} (click to toggle)</span>
+                    <span className="text-[11px]">Chart Style: {style}</span>
                   </TooltipContent>
                 </Tooltip>
 
-                {/* Resize Switcher */}
                 <Tooltip>
                   <TooltipTrigger render={
                     <button
@@ -267,11 +378,11 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Size: {size} (click to resize)</span>
+                    <span className="text-[11px]">Size: {size}</span>
                   </TooltipContent>
                 </Tooltip>
 
-                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-1">
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-0.5">
                   <Cpu className="h-4 w-4 text-foreground" />
                 </div>
               </div>
@@ -286,7 +397,6 @@ export function WidgetGrid({
                 </Badge>
               </div>
 
-              {/* Dynamic Chart Style Rendering */}
               {style === 'bar' && (
                 <Progress value={cpuVal} className="h-1.5 bg-muted" />
               )}
@@ -302,24 +412,27 @@ export function WidgetGrid({
             </CardContent>
           </Card>
         );
-      })()}
+      }
 
-      {/* 2. Memory Card */}
-      {hasMemory && (() => {
+      case 'memory': {
         const style = customizations['memory']?.style || 'bar';
         const size = customizations['memory']?.size || '1x';
         const memVal = metric?.memory_usage ?? 0;
 
         return (
-          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('memory')} group`}>
+          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('memory')} group relative`}>
+            {renderResizeHandle('memory')}
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div>
-                <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
-                  Memory Utilization
-                </CardTitle>
-                <CardDescription className="text-[11px]">Physical RAM allocation</CardDescription>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground truncate">
+                    Memory Utilization
+                  </CardTitle>
+                  <CardDescription className="text-[11px] truncate">Physical RAM allocation</CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <Tooltip>
                   <TooltipTrigger render={
                     <button
@@ -331,7 +444,7 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Chart Style: {style} (click to toggle)</span>
+                    <span className="text-[11px]">Chart Style: {style}</span>
                   </TooltipContent>
                 </Tooltip>
 
@@ -346,11 +459,11 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Size: {size} (click to resize)</span>
+                    <span className="text-[11px]">Size: {size}</span>
                   </TooltipContent>
                 </Tooltip>
 
-                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-1">
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-0.5">
                   <Activity className="h-4 w-4 text-foreground" />
                 </div>
               </div>
@@ -380,24 +493,27 @@ export function WidgetGrid({
             </CardContent>
           </Card>
         );
-      })()}
+      }
 
-      {/* 3. Storage Utilization Card */}
-      {hasDisk && (() => {
+      case 'disk': {
         const style = customizations['disk']?.style || 'bar';
         const size = customizations['disk']?.size || '1x';
         const diskVal = metric?.disk_usage ?? 0;
 
         return (
-          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('disk')} group`}>
+          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('disk')} group relative`}>
+            {renderResizeHandle('disk')}
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div>
-                <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
-                  Storage Utilization
-                </CardTitle>
-                <CardDescription className="text-[11px]">Primary filesystem partition</CardDescription>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground truncate">
+                    Storage Utilization
+                  </CardTitle>
+                  <CardDescription className="text-[11px] truncate">Primary filesystem partition</CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <Tooltip>
                   <TooltipTrigger render={
                     <button
@@ -409,7 +525,7 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Chart Style: {style} (click to toggle)</span>
+                    <span className="text-[11px]">Chart Style: {style}</span>
                   </TooltipContent>
                 </Tooltip>
 
@@ -424,11 +540,11 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Size: {size} (click to resize)</span>
+                    <span className="text-[11px]">Size: {size}</span>
                   </TooltipContent>
                 </Tooltip>
 
-                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-1">
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-0.5">
                   <HardDrive className="h-4 w-4 text-foreground" />
                 </div>
               </div>
@@ -458,25 +574,28 @@ export function WidgetGrid({
             </CardContent>
           </Card>
         );
-      })()}
+      }
 
-      {/* 4. Network I/O Throughput Card */}
-      {hasNetwork && (() => {
+      case 'network': {
         const style = customizations['network']?.style || 'bar';
         const size = customizations['network']?.size || '1x';
         const recvSpeed = metric?.net_recv_kb || 0;
         const sentSpeed = metric?.net_sent_kb || 0;
 
         return (
-          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('network')} group`}>
+          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('network')} group relative`}>
+            {renderResizeHandle('network')}
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div>
-                <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
-                  Network I/O Throughput
-                </CardTitle>
-                <CardDescription className="text-[11px]">Real-time bandwidth transfer</CardDescription>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground truncate">
+                    Network I/O
+                  </CardTitle>
+                  <CardDescription className="text-[11px] truncate">Bandwidth transfer</CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <Tooltip>
                   <TooltipTrigger render={
                     <button
@@ -488,7 +607,7 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">View Style: {style} (click to toggle)</span>
+                    <span className="text-[11px]">View Style: {style}</span>
                   </TooltipContent>
                 </Tooltip>
 
@@ -503,11 +622,11 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Size: {size} (click to resize)</span>
+                    <span className="text-[11px]">Size: {size}</span>
                   </TooltipContent>
                 </Tooltip>
 
-                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-1">
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-0.5">
                   <ArrowDownUp className="h-4 w-4 text-foreground" />
                 </div>
               </div>
@@ -545,25 +664,28 @@ export function WidgetGrid({
             </CardContent>
           </Card>
         );
-      })()}
+      }
 
-      {/* 5. Disk I/O Throughput Card */}
-      {hasDiskIo && (() => {
+      case 'disk_io': {
         const style = customizations['disk_io']?.style || 'bar';
         const size = customizations['disk_io']?.size || '1x';
         const readSpeed = metric?.disk_read_kb || 0;
         const writeSpeed = metric?.disk_write_kb || 0;
 
         return (
-          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('disk_io')} group`}>
+          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('disk_io')} group relative`}>
+            {renderResizeHandle('disk_io')}
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div>
-                <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
-                  Disk I/O Throughput
-                </CardTitle>
-                <CardDescription className="text-[11px]">Active read/write transfer rates</CardDescription>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground truncate">
+                    Disk I/O
+                  </CardTitle>
+                  <CardDescription className="text-[11px] truncate">Read/write throughput</CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <Tooltip>
                   <TooltipTrigger render={
                     <button
@@ -575,7 +697,7 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">View Style: {style} (click to toggle)</span>
+                    <span className="text-[11px]">View Style: {style}</span>
                   </TooltipContent>
                 </Tooltip>
 
@@ -590,11 +712,11 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Size: {size} (click to resize)</span>
+                    <span className="text-[11px]">Size: {size}</span>
                   </TooltipContent>
                 </Tooltip>
 
-                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-1">
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-0.5">
                   <Gauge className="h-4 w-4 text-foreground" />
                 </div>
               </div>
@@ -628,21 +750,24 @@ export function WidgetGrid({
             </CardContent>
           </Card>
         );
-      })()}
+      }
 
-      {/* 6. Ingestor Database Store Card */}
-      {hasDatabase && (() => {
+      case 'database': {
         const size = customizations['database']?.size || '1x';
         return (
-          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('database')} group`}>
+          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('database')} group relative`}>
+            {renderResizeHandle('database')}
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div>
-                <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
-                  Ingestor Database
-                </CardTitle>
-                <CardDescription className="text-[11px]">SQLite persistent telemetry storage</CardDescription>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground truncate">
+                    Ingestor Database
+                  </CardTitle>
+                  <CardDescription className="text-[11px] truncate">SQLite persistent storage</CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <Tooltip>
                   <TooltipTrigger render={
                     <button
@@ -654,11 +779,11 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Size: {size} (click to resize)</span>
+                    <span className="text-[11px]">Size: {size}</span>
                   </TooltipContent>
                 </Tooltip>
 
-                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-1">
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-0.5">
                   <Database className="h-4 w-4 text-foreground" />
                 </div>
               </div>
@@ -681,21 +806,24 @@ export function WidgetGrid({
             </CardContent>
           </Card>
         );
-      })()}
+      }
 
-      {/* 7. System Uptime & Tasks Card */}
-      {hasUptime && (() => {
+      case 'uptime_tasks': {
         const size = customizations['uptime_tasks']?.size || '1x';
         return (
-          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('uptime_tasks')} group`}>
+          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('uptime_tasks')} group relative`}>
+            {renderResizeHandle('uptime_tasks')}
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div>
-                <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
-                  System Uptime & Tasks
-                </CardTitle>
-                <CardDescription className="text-[11px]">Kernel duration & load average</CardDescription>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground truncate">
+                    System Uptime
+                  </CardTitle>
+                  <CardDescription className="text-[11px] truncate">Kernel & load average</CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <Tooltip>
                   <TooltipTrigger render={
                     <button
@@ -707,11 +835,11 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Size: {size} (click to resize)</span>
+                    <span className="text-[11px]">Size: {size}</span>
                   </TooltipContent>
                 </Tooltip>
 
-                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-1">
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-0.5">
                   <Clock className="h-4 w-4 text-foreground" />
                 </div>
               </div>
@@ -734,10 +862,9 @@ export function WidgetGrid({
             </CardContent>
           </Card>
         );
-      })()}
+      }
 
-      {/* 8. Queue Buffer Monitor Card */}
-      {hasQueue && (() => {
+      case 'queue': {
         const style = customizations['queue']?.style || 'bar';
         const size = customizations['queue']?.size || '1x';
         const qSize = queueInfo.queue_size || 0;
@@ -745,15 +872,19 @@ export function WidgetGrid({
         const qPct = qMax > 0 ? (qSize / qMax) * 100 : 0;
 
         return (
-          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('queue')} group`}>
+          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('queue')} group relative`}>
+            {renderResizeHandle('queue')}
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div>
-                <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
-                  Queue Buffer
-                </CardTitle>
-                <CardDescription className="text-[11px]">In-memory async queue capacity</CardDescription>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground truncate">
+                    Queue Buffer
+                  </CardTitle>
+                  <CardDescription className="text-[11px] truncate">In-memory async capacity</CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <Tooltip>
                   <TooltipTrigger render={
                     <button
@@ -765,7 +896,7 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Chart Style: {style} (click to toggle)</span>
+                    <span className="text-[11px]">Chart Style: {style}</span>
                   </TooltipContent>
                 </Tooltip>
 
@@ -780,11 +911,11 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Size: {size} (click to resize)</span>
+                    <span className="text-[11px]">Size: {size}</span>
                   </TooltipContent>
                 </Tooltip>
 
-                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-1">
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-0.5">
                   <Layers className="h-4 w-4 text-foreground" />
                 </div>
               </div>
@@ -814,19 +945,22 @@ export function WidgetGrid({
             </CardContent>
           </Card>
         );
-      })()}
+      }
 
-      {/* 9. Node Telemetry Properties Card */}
-      {hasNode && (() => {
+      case 'node': {
         const size = customizations['node']?.size || '2x';
         return (
-          <Card className={`bg-card border-border shadow-sm transition-all ${getSizeClasses('node', 'col-span-1 md:col-span-2')} group`}>
+          <Card className={`bg-card border-border shadow-sm transition-all ${getSizeClasses('node', 'col-span-1 md:col-span-2')} group relative`}>
+            {renderResizeHandle('node')}
             <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-              <div>
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Server className="h-4 w-4 text-muted-foreground" /> Node Properties
-                </CardTitle>
-                <CardDescription className="text-xs">Host system parameters</CardDescription>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2 truncate">
+                    <Server className="h-4 w-4 text-muted-foreground shrink-0" /> Node Properties
+                  </CardTitle>
+                  <CardDescription className="text-xs truncate">Host system parameters</CardDescription>
+                </div>
               </div>
               <Tooltip>
                 <TooltipTrigger render={
@@ -839,7 +973,7 @@ export function WidgetGrid({
                   </button>
                 } />
                 <TooltipContent side="top">
-                  <span className="text-[11px]">Size: {size} (click to resize)</span>
+                  <span className="text-[11px]">Size: {size}</span>
                 </TooltipContent>
               </Tooltip>
             </CardHeader>
@@ -863,23 +997,26 @@ export function WidgetGrid({
             </CardContent>
           </Card>
         );
-      })()}
+      }
 
-      {/* 10. Pipeline Architecture Card */}
-      {hasPipeline && (() => {
+      case 'pipeline': {
         const size = customizations['pipeline']?.size || '2x';
         return (
-          <Card className={`bg-card border-border shadow-sm transition-all ${getSizeClasses('pipeline', 'col-span-1 md:col-span-2')} group`}>
+          <Card className={`bg-card border-border shadow-sm transition-all ${getSizeClasses('pipeline', 'col-span-1 md:col-span-2')} group relative`}>
+            {renderResizeHandle('pipeline')}
             <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-              <div>
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Database className="h-4 w-4 text-muted-foreground" /> Pipeline Architecture
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Coordinated microservices pipeline health
-                </CardDescription>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2 truncate">
+                    <Database className="h-4 w-4 text-muted-foreground shrink-0" /> Pipeline Architecture
+                  </CardTitle>
+                  <CardDescription className="text-xs truncate">
+                    Microservices pipeline health
+                  </CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <Badge variant="outline" className="text-[10px] font-mono border-border">
                   4 Daemons
                 </Badge>
@@ -894,7 +1031,7 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Size: {size} (click to resize)</span>
+                    <span className="text-[11px]">Size: {size}</span>
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -936,23 +1073,26 @@ export function WidgetGrid({
             </CardContent>
           </Card>
         );
-      })()}
+      }
 
-      {/* 11. Raw Telemetry Frame Card */}
-      {hasTelemetryFrame && (() => {
+      case 'telemetry_frame': {
         const size = customizations['telemetry_frame']?.size || '4x';
         return (
-          <Card className={`bg-card border-border shadow-sm transition-all ${getSizeClasses('telemetry_frame', 'col-span-1 md:col-span-2 lg:col-span-4')} group`}>
+          <Card className={`bg-card border-border shadow-sm transition-all ${getSizeClasses('telemetry_frame', 'col-span-1 md:col-span-2 lg:col-span-4')} group relative`}>
+            {renderResizeHandle('telemetry_frame')}
             <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-              <div>
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Radio className="h-4 w-4 text-muted-foreground" /> Raw Telemetry Frame
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Active JSON packet peeked from in-memory queue buffer
-                </CardDescription>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2 truncate">
+                    <Radio className="h-4 w-4 text-muted-foreground shrink-0" /> Raw Telemetry Frame
+                  </CardTitle>
+                  <CardDescription className="text-xs truncate">
+                    Active JSON packet peeked from queue
+                  </CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <Badge variant="outline" className="font-mono text-[10px]">
                   JSON Stream
                 </Badge>
@@ -967,7 +1107,7 @@ export function WidgetGrid({
                     </button>
                   } />
                   <TooltipContent side="top">
-                    <span className="text-[11px]">Size: {size} (click to resize)</span>
+                    <span className="text-[11px]">Size: {size}</span>
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -981,7 +1121,35 @@ export function WidgetGrid({
             </CardContent>
           </Card>
         );
-      })()}
+      }
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 auto-rows-fr">
+      {activeWidgetIds.map((widgetId) => (
+        <div
+          key={widgetId}
+          draggable
+          onDragStart={(e) => handleDragStart(e, widgetId)}
+          onDragOver={(e) => handleDragOver(e, widgetId)}
+          onDragLeave={(e) => handleDragLeave(e, widgetId)}
+          onDrop={(e) => handleDrop(e, widgetId)}
+          onDragEnd={handleDragEnd}
+          className={`transition-all duration-150 ${getSizeClasses(widgetId)} ${
+            draggedId === widgetId ? 'opacity-40 scale-[0.98]' : ''
+          } ${
+            dragOverId === widgetId && draggedId !== widgetId
+              ? 'ring-2 ring-primary ring-offset-2 ring-offset-background rounded-xl'
+              : ''
+          }`}
+        >
+          {renderWidgetContent(widgetId)}
+        </div>
+      ))}
     </div>
   );
 }
