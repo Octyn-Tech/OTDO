@@ -8,7 +8,6 @@ import {
   Layers,
   Radio,
   Server,
-  X,
   Plus,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -31,7 +30,6 @@ interface QueueStatus {
 
 interface WidgetGridProps {
   activeWidgetIds: string[];
-  onRemoveWidget: (id: string) => void;
   onOpenAddModal: () => void;
   metric: MetricData | null;
   queueInfo: QueueStatus;
@@ -40,7 +38,6 @@ interface WidgetGridProps {
 
 export function WidgetGrid({
   activeWidgetIds,
-  onRemoveWidget,
   onOpenAddModal,
   metric,
   queueInfo,
@@ -70,7 +67,6 @@ export function WidgetGrid({
     );
   }
 
-  // Filter metric cards
   const hasCpu = activeWidgetIds.includes('cpu');
   const hasMemory = activeWidgetIds.includes('memory');
   const hasDisk = activeWidgetIds.includes('disk');
@@ -87,7 +83,7 @@ export function WidgetGrid({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* CPU Card */}
           {hasCpu && (
-            <Card className="bg-card border-border shadow-sm hover:border-foreground/20 transition-colors relative group">
+            <Card className="bg-card border-border shadow-sm hover:border-foreground/20 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <div>
                   <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
@@ -95,17 +91,8 @@ export function WidgetGrid({
                   </CardTitle>
                   <CardDescription className="text-[11px]">System compute core load</CardDescription>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60">
-                    <Cpu className="h-4 w-4 text-foreground" />
-                  </div>
-                  <button
-                    onClick={() => onRemoveWidget('cpu')}
-                    title="Remove widget"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-red-400"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60">
+                  <Cpu className="h-4 w-4 text-foreground" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -124,7 +111,7 @@ export function WidgetGrid({
 
           {/* Memory Card */}
           {hasMemory && (
-            <Card className="bg-card border-border shadow-sm hover:border-foreground/20 transition-colors relative group">
+            <Card className="bg-card border-border shadow-sm hover:border-foreground/20 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <div>
                   <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
@@ -132,17 +119,8 @@ export function WidgetGrid({
                   </CardTitle>
                   <CardDescription className="text-[11px]">Physical RAM allocation</CardDescription>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60">
-                    <Activity className="h-4 w-4 text-foreground" />
-                  </div>
-                  <button
-                    onClick={() => onRemoveWidget('memory')}
-                    title="Remove widget"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-red-400"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60">
+                  <Activity className="h-4 w-4 text-foreground" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -161,7 +139,7 @@ export function WidgetGrid({
 
           {/* Disk Card */}
           {hasDisk && (
-            <Card className="bg-card border-border shadow-sm hover:border-foreground/20 transition-colors relative group">
+            <Card className="bg-card border-border shadow-sm hover:border-foreground/20 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <div>
                   <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
@@ -169,17 +147,8 @@ export function WidgetGrid({
                   </CardTitle>
                   <CardDescription className="text-[11px]">Primary filesystem partition</CardDescription>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60">
-                    <HardDrive className="h-4 w-4 text-foreground" />
-                  </div>
-                  <button
-                    onClick={() => onRemoveWidget('disk')}
-                    title="Remove widget"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-red-400"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60">
+                  <HardDrive className="h-4 w-4 text-foreground" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -198,7 +167,7 @@ export function WidgetGrid({
 
           {/* Queue Monitor Card */}
           {hasQueue && (
-            <Card className="bg-card border-border shadow-sm hover:border-foreground/20 transition-colors relative group">
+            <Card className="bg-card border-border shadow-sm hover:border-foreground/20 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <div>
                   <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
@@ -206,17 +175,8 @@ export function WidgetGrid({
                   </CardTitle>
                   <CardDescription className="text-[11px]">In-memory async queue capacity</CardDescription>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60">
-                    <Layers className="h-4 w-4 text-foreground" />
-                  </div>
-                  <button
-                    onClick={() => onRemoveWidget('queue')}
-                    title="Remove widget"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-red-400"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60">
+                  <Layers className="h-4 w-4 text-foreground" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -242,7 +202,7 @@ export function WidgetGrid({
       {(hasNode || hasPipeline) && (
         <div className={`grid grid-cols-1 ${hasNode && hasPipeline ? 'lg:grid-cols-3' : 'grid-cols-1'} gap-5`}>
           {hasNode && (
-            <Card className={`bg-card border-border shadow-sm relative group ${hasNode && !hasPipeline ? 'w-full' : ''}`}>
+            <Card className={`bg-card border-border shadow-sm ${hasNode && !hasPipeline ? 'w-full' : ''}`}>
               <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
                 <div>
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -250,13 +210,6 @@ export function WidgetGrid({
                   </CardTitle>
                   <CardDescription className="text-xs">Host system parameters</CardDescription>
                 </div>
-                <button
-                  onClick={() => onRemoveWidget('node')}
-                  title="Remove widget"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-red-400"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
               </CardHeader>
               <CardContent className="space-y-3 font-mono text-xs">
                 <div className="flex justify-between py-1 border-b border-border/40">
@@ -280,7 +233,7 @@ export function WidgetGrid({
           )}
 
           {hasPipeline && (
-            <Card className={`bg-card border-border shadow-sm relative group ${hasNode && hasPipeline ? 'lg:col-span-2' : 'w-full'}`}>
+            <Card className={`bg-card border-border shadow-sm ${hasNode && hasPipeline ? 'lg:col-span-2' : 'w-full'}`}>
               <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
                 <div>
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -290,18 +243,9 @@ export function WidgetGrid({
                     Coordinated microservices pipeline health
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[10px] font-mono border-border">
-                    4 Daemons
-                  </Badge>
-                  <button
-                    onClick={() => onRemoveWidget('pipeline')}
-                    title="Remove widget"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-red-400"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                <Badge variant="outline" className="text-[10px] font-mono border-border">
+                  4 Daemons
+                </Badge>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
@@ -345,7 +289,7 @@ export function WidgetGrid({
 
       {/* Raw JSON Frame Widget */}
       {hasTelemetryFrame && (
-        <Card className="bg-card border-border shadow-sm relative group">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -355,18 +299,9 @@ export function WidgetGrid({
                 Active JSON packet peeked from in-memory queue buffer
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="font-mono text-[10px]">
-                JSON Packet
-              </Badge>
-              <button
-                onClick={() => onRemoveWidget('telemetry_frame')}
-                title="Remove widget"
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-red-400"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <Badge variant="outline" className="font-mono text-[10px]">
+              JSON Packet
+            </Badge>
           </CardHeader>
           <CardContent>
             <div className="rounded-lg bg-black/60 border border-border p-3 font-mono text-[11px] text-muted-foreground overflow-x-auto">

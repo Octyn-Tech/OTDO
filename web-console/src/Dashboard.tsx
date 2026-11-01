@@ -230,7 +230,6 @@ export default function Dashboard() {
           {/* Dynamic Widget Grid Canvas */}
           <WidgetGrid
             activeWidgetIds={activeWidgetIds}
-            onRemoveWidget={handleRemoveWidget}
             onOpenAddModal={() => setIsAddWidgetOpen(true)}
             metric={latestMetric}
             queueInfo={queueInfo}
