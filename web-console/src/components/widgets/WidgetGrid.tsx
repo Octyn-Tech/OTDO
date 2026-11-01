@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { SparklineChart, RadialGauge, SegmentedBlocks } from './ChartViews';
+import { SparklineChart, RadialGauge, SegmentedBlocks, MultiWaveChart } from './ChartViews';
 
 export interface MetricData {
   timestamp: string;
@@ -122,6 +122,8 @@ export function WidgetGrid({
     memory: number[];
     disk: number[];
     net_recv: number[];
+    net_sent: number[];
+    disk_read: number[];
     disk_write: number[];
     queue: number[];
   }>({
@@ -129,6 +131,8 @@ export function WidgetGrid({
     memory: [],
     disk: [],
     net_recv: [],
+    net_sent: [],
+    disk_read: [],
     disk_write: [],
     queue: [],
   });
@@ -136,7 +140,7 @@ export function WidgetGrid({
   useEffect(() => {
     if (!metric) return;
     setHistory((prev) => {
-      const push = (arr: number[], val: number) => {
+      const push = (arr: number[] = [], val: number) => {
         const next = [...arr, val];
         return next.length > 20 ? next.slice(next.length - 20) : next;
       };
@@ -145,6 +149,8 @@ export function WidgetGrid({
         memory: push(prev.memory, metric.memory_usage || 0),
         disk: push(prev.disk, metric.disk_usage || 0),
         net_recv: push(prev.net_recv, metric.net_recv_kb || 0),
+        net_sent: push(prev.net_sent, metric.net_sent_kb || 0),
+        disk_read: push(prev.disk_read, metric.disk_read_kb || 0),
         disk_write: push(prev.disk_write, metric.disk_write_kb || 0),
         queue: push(prev.queue, queueInfo.queue_size || 0),
       };
@@ -410,8 +416,8 @@ export function WidgetGrid({
                   )}
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center pt-1 pb-1">
-                  <RadialGauge value={cpuVal} max={100} size={size === '1x' ? 84 : 100} label="CPU %" />
+                <div className="flex flex-col items-center justify-center pt-0 pb-1">
+                  <RadialGauge value={cpuVal} max={100} size={size === '1x' ? 120 : 152} label="CPU %" />
                   <div className="mt-2.5">
                     <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
                       {cpuVal > 80 ? 'Heavy Load' : 'Optimal'}
@@ -501,8 +507,8 @@ export function WidgetGrid({
                   )}
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center pt-1 pb-1">
-                  <RadialGauge value={memVal} max={100} size={size === '1x' ? 84 : 100} label="RAM %" />
+                <div className="flex flex-col items-center justify-center pt-0 pb-1">
+                  <RadialGauge value={memVal} max={100} size={size === '1x' ? 120 : 152} label="RAM %" />
                   <div className="mt-2.5">
                     <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
                       {memVal > 85 ? 'High Usage' : 'Normal'}
@@ -592,8 +598,8 @@ export function WidgetGrid({
                   )}
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center pt-1 pb-1">
-                  <RadialGauge value={diskVal} max={100} size={size === '1x' ? 84 : 100} label="Disk %" />
+                <div className="flex flex-col items-center justify-center pt-0 pb-1">
+                  <RadialGauge value={diskVal} max={100} size={size === '1x' ? 120 : 152} label="Disk %" />
                   <div className="mt-2.5">
                     <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
                       Mounted /
@@ -682,7 +688,26 @@ export function WidgetGrid({
               </div>
 
               {style === 'wave' ? (
-                <SparklineChart data={history.net_recv} height={size === '1x' ? 44 : 56} unit=" KB/s" />
+                <MultiWaveChart
+                  height={size === '1x' ? 48 : 64}
+                  unit=" KB/s"
+                  series={[
+                    {
+                      id: 'net-down',
+                      name: 'Down',
+                      data: history.net_recv,
+                      color: '#34d399',
+                      fillColor: '#34d399',
+                    },
+                    {
+                      id: 'net-up',
+                      name: 'Up',
+                      data: history.net_sent,
+                      color: '#22d3ee',
+                      fillColor: '#22d3ee',
+                    },
+                  ]}
+                />
               ) : (
                 <div className="flex justify-between items-center pt-1 border-t border-border/40">
                   <span className="text-[10px] text-muted-foreground">Traffic Channel</span>
@@ -754,13 +779,17 @@ export function WidgetGrid({
             <CardContent className="space-y-4">
               <div className="space-y-1">
                 <div className="flex items-center justify-between font-mono">
-                  <span className="text-xs text-muted-foreground">Read</span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-amber-400 inline-block" /> Read
+                  </span>
                   <span className="text-base font-bold text-foreground">
                     {formatSpeed(readSpeed)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between font-mono">
-                  <span className="text-xs text-muted-foreground">Write</span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-violet-400 inline-block" /> Write
+                  </span>
                   <span className="text-base font-bold text-foreground">
                     {formatSpeed(writeSpeed)}
                   </span>
@@ -768,7 +797,26 @@ export function WidgetGrid({
               </div>
 
               {style === 'wave' ? (
-                <SparklineChart data={history.disk_write} height={size === '1x' ? 44 : 56} unit=" KB/s" />
+                <MultiWaveChart
+                  height={size === '1x' ? 48 : 64}
+                  unit=" KB/s"
+                  series={[
+                    {
+                      id: 'disk-read',
+                      name: 'Read',
+                      data: history.disk_read,
+                      color: '#fbbf24',
+                      fillColor: '#fbbf24',
+                    },
+                    {
+                      id: 'disk-write',
+                      name: 'Write',
+                      data: history.disk_write,
+                      color: '#a78bfa',
+                      fillColor: '#a78bfa',
+                    },
+                  ]}
+                />
               ) : (
                 <div className="flex justify-between items-center pt-1 border-t border-border/40">
                   <span className="text-[10px] text-muted-foreground">Drive Controller</span>
@@ -973,8 +1021,8 @@ export function WidgetGrid({
                   )}
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center pt-1 pb-1">
-                  <RadialGauge value={qSize} max={qMax} size={size === '1x' ? 84 : 100} label={`/ ${qMax}`} />
+                <div className="flex flex-col items-center justify-center pt-0 pb-1">
+                  <RadialGauge value={qSize} max={qMax} size={size === '1x' ? 120 : 152} label={`/ ${qMax}`} />
                   <div className="mt-2.5">
                     <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
                       {qSize > 0 ? 'Active Queue' : 'Buffer Idle'}
