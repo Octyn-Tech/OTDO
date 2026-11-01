@@ -173,7 +173,7 @@ export default function Dashboard() {
         {/* Overview Page Main Content */}
         <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           <div className="pb-6">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">System Telemetry</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">System Overview</h1>
           </div>
 
           {/* Rest is blank */}
