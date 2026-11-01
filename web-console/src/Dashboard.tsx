@@ -11,6 +11,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
+import { AddWidgetDialog, AVAILABLE_WIDGETS } from '@/components/AddWidgetDialog';
+import { WidgetGrid } from '@/components/widgets/WidgetGrid';
 import { useAuth } from './context/AuthContext';
 
 interface MetricData {
@@ -26,9 +28,11 @@ interface QueueStatus {
   max_size: number;
 }
 
+const WIDGETS_STORAGE_KEY = 'otdo_active_widgets';
+
 export default function Dashboard() {
   const { user, logout } = useAuth();
-  const [_latestMetric, setLatestMetric] = useState<MetricData | null>(() => {
+  const [latestMetric, setLatestMetric] = useState<MetricData | null>(() => {
     try {
       const cached = sessionStorage.getItem('otdo_cached_metric');
       return cached ? JSON.parse(cached) : null;
@@ -46,6 +50,60 @@ export default function Dashboard() {
     }
   });
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  // Widget management state with localStorage persistence
+  const [activeWidgetIds, setActiveWidgetIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(WIDGETS_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isAddWidgetOpen, setIsAddWidgetOpen] = useState(false);
+
+  const handleToggleWidget = (id: string) => {
+    setActiveWidgetIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id];
+      try {
+        localStorage.setItem(WIDGETS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage error
+      }
+      return next;
+    });
+  };
+
+  const handleRemoveWidget = (id: string) => {
+    setActiveWidgetIds((prev) => {
+      const next = prev.filter((item) => item !== id);
+      try {
+        localStorage.setItem(WIDGETS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage error
+      }
+      return next;
+    });
+  };
+
+  const handleAddAll = () => {
+    const allIds = AVAILABLE_WIDGETS.map((w) => w.id);
+    setActiveWidgetIds(allIds);
+    try {
+      localStorage.setItem(WIDGETS_STORAGE_KEY, JSON.stringify(allIds));
+    } catch {
+      // ignore storage error
+    }
+  };
+
+  const handleRemoveAll = () => {
+    setActiveWidgetIds([]);
+    try {
+      localStorage.setItem(WIDGETS_STORAGE_KEY, JSON.stringify([]));
+    } catch {
+      // ignore storage error
+    }
+  };
 
   const fetchMetrics = useCallback(async () => {
     try {
@@ -172,11 +230,17 @@ export default function Dashboard() {
         </header>
 
         {/* Overview Page Main Content */}
-        <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-          <div className="flex items-center justify-between pb-6">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">System Overview</h1>
+        <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+          <div className="flex items-center justify-between pb-2 border-b border-border/40">
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">System Overview</h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Customizable real-time resource monitor and telemetry widgets
+              </p>
+            </div>
             <Button
               size="sm"
+              onClick={() => setIsAddWidgetOpen(true)}
               className="h-8 gap-1.5 text-xs font-medium cursor-pointer shadow-sm"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -184,8 +248,26 @@ export default function Dashboard() {
             </Button>
           </div>
 
-          {/* Rest is blank */}
+          {/* Dynamic Widget Grid Canvas */}
+          <WidgetGrid
+            activeWidgetIds={activeWidgetIds}
+            onRemoveWidget={handleRemoveWidget}
+            onOpenAddModal={() => setIsAddWidgetOpen(true)}
+            metric={latestMetric}
+            queueInfo={queueInfo}
+            isOnline={isOnline}
+          />
         </main>
+
+        {/* Add Widget Options Modal */}
+        <AddWidgetDialog
+          open={isAddWidgetOpen}
+          onOpenChange={setIsAddWidgetOpen}
+          activeWidgetIds={activeWidgetIds}
+          onToggleWidget={handleToggleWidget}
+          onAddAll={handleAddAll}
+          onRemoveAll={handleRemoveAll}
+        />
       </SidebarInset>
     </SidebarProvider>
   );
