@@ -18,6 +18,7 @@ import {
   Plus,
   Radio,
   Server,
+  Thermometer,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +42,9 @@ export interface MetricData {
   active_processes?: number;
   db_size_bytes?: number;
   db_record_count?: number;
+  cpu_temp_c?: number;
+  gpu_temp_c?: number;
+  nvme_temp_c?: number;
 }
 
 interface QueueStatus {
@@ -126,6 +130,7 @@ export function WidgetGrid({
     disk_read: number[];
     disk_write: number[];
     queue: number[];
+    temperature: number[];
   }>({
     cpu: [],
     memory: [],
@@ -135,6 +140,7 @@ export function WidgetGrid({
     disk_read: [],
     disk_write: [],
     queue: [],
+    temperature: [],
   });
 
   useEffect(() => {
@@ -153,6 +159,7 @@ export function WidgetGrid({
         disk_read: push(prev.disk_read, metric.disk_read_kb || 0),
         disk_write: push(prev.disk_write, metric.disk_write_kb || 0),
         queue: push(prev.queue, queueInfo.queue_size || 0),
+        temperature: push(prev.temperature, metric.cpu_temp_c || 0),
       };
     });
   }, [metric, queueInfo.queue_size]);
@@ -823,6 +830,125 @@ export function WidgetGrid({
                   <Badge variant="outline" className="text-[10px] font-mono border-border">
                     IOPS Active
                   </Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      }
+
+      case 'temperature': {
+        const style = customizations['temperature']?.style || 'bar';
+        const size = customizations['temperature']?.size || '1x';
+        const tempVal = metric?.cpu_temp_c ?? 0;
+        const gpuTemp = metric?.gpu_temp_c;
+        const nvmeTemp = metric?.nvme_temp_c;
+
+        const getThermalStatus = (temp: number) => {
+          if (temp >= 85) return { label: 'Thermal Throttle', textClass: 'text-red-400 border-red-500/40' };
+          if (temp >= 75) return { label: 'High Heat', textClass: 'text-orange-400 border-orange-500/40' };
+          if (temp >= 65) return { label: 'Warm', textClass: 'text-amber-400 border-amber-500/40' };
+          return { label: 'Optimal', textClass: 'text-emerald-400 border-emerald-500/40' };
+        };
+
+        const status = getThermalStatus(tempVal);
+        const tempPct = Math.min(100, Math.max(0, ((tempVal - 20) / 80) * 100));
+
+        return (
+          <Card className={`bg-card border-border shadow-sm hover:border-foreground/20 transition-all ${getSizeClasses('temperature')} group relative`}>
+            {renderResizeHandle('temperature')}
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <div className="flex items-center gap-1.5 min-w-0">
+                {renderDragHandle()}
+                <div className="min-w-0">
+                  <CardTitle className="text-xs uppercase font-medium tracking-wider text-muted-foreground truncate">
+                    Server Temperature
+                  </CardTitle>
+                  <CardDescription className="text-[11px] truncate">Thermal sensor telemetry</CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <Tooltip>
+                  <TooltipTrigger render={
+                    <button
+                      type="button"
+                      onClick={() => cycleStyle('temperature')}
+                      className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted opacity-60 group-hover:opacity-100 transition-opacity"
+                    >
+                      <BarChart2 className="h-3.5 w-3.5" />
+                    </button>
+                  } />
+                  <TooltipContent side="top">
+                    <span className="text-[11px]">Chart Style: {style}</span>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger render={
+                    <button
+                      type="button"
+                      onClick={() => cycleSize('temperature')}
+                      className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted opacity-60 group-hover:opacity-100 transition-opacity"
+                    >
+                      {size === '1x' ? <Maximize2 className="h-3.5 w-3.5" /> : <Minimize2 className="h-3.5 w-3.5" />}
+                    </button>
+                  } />
+                  <TooltipContent side="top">
+                    <span className="text-[11px]">Size: {size}</span>
+                  </TooltipContent>
+                </Tooltip>
+
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center border border-border/60 ml-0.5">
+                  <Thermometer className="h-4 w-4 text-foreground" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {style !== 'radial' ? (
+                <>
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-3xl font-mono font-bold tracking-tight">
+                      {tempVal > 0 ? `${tempVal.toFixed(1)}°C` : 'Offline'}
+                    </div>
+                    <Badge variant="outline" className={`font-mono text-[10px] ${status.textClass}`}>
+                      {status.label}
+                    </Badge>
+                  </div>
+
+                  {(gpuTemp !== undefined || nvmeTemp !== undefined) && size !== '1x' && (
+                    <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground pt-0.5">
+                      {gpuTemp !== undefined && (
+                        <span>GPU: <strong className="text-foreground">{gpuTemp.toFixed(1)}°C</strong></span>
+                      )}
+                      {nvmeTemp !== undefined && (
+                        <span>NVMe: <strong className="text-foreground">{nvmeTemp.toFixed(1)}°C</strong></span>
+                      )}
+                    </div>
+                  )}
+
+                  {style === 'bar' && (
+                    <Progress value={tempPct} className="h-1.5 bg-muted" />
+                  )}
+                  {style === 'wave' && (
+                    <SparklineChart data={history.temperature} maxVal={100} unit="°C" height={size === '1x' ? 48 : 64} />
+                  )}
+                  {style === 'blocks' && (
+                    <SegmentedBlocks value={tempVal} max={100} segments={16} />
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center pt-0 pb-1">
+                  <RadialGauge value={tempVal} max={100} size={size === '1x' ? 120 : 152} label="°C" />
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <Badge variant="outline" className={`font-mono text-[10px] ${status.textClass}`}>
+                      {status.label}
+                    </Badge>
+                    {gpuTemp !== undefined && size !== '1x' && (
+                      <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
+                        GPU: {gpuTemp.toFixed(1)}°C
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>

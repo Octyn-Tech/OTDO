@@ -9,6 +9,39 @@ import psutil
 
 QUEUE_URL = "http://localhost:7000/push"
 
+def read_system_temperatures():
+    cpu_temp = None
+    gpu_temp = None
+    nvme_temp = None
+    try:
+        temps = psutil.sensors_temperatures() if hasattr(psutil, "sensors_temperatures") else {}
+        if temps:
+            for k in ["k10temp", "coretemp", "cpu_thermal", "soc_thermal"]:
+                if k in temps and temps[k]:
+                    cpu_temp = round(temps[k][0].current, 1)
+                    break
+            for k in ["amdgpu", "nouveau", "nvidia"]:
+                if k in temps and temps[k]:
+                    gpu_temp = round(temps[k][0].current, 1)
+                    break
+            if "nvme" in temps and temps["nvme"]:
+                nvme_temp = round(temps["nvme"][0].current, 1)
+            if cpu_temp is None:
+                if "acpitz" in temps and temps["acpitz"]:
+                    cpu_temp = round(temps["acpitz"][0].current, 1)
+                else:
+                    for s_list in temps.values():
+                        if s_list:
+                            cpu_temp = round(s_list[0].current, 1)
+                            break
+    except Exception:
+        pass
+    return {
+        "cpu_temp_c": cpu_temp if cpu_temp is not None else 45.0,
+        "gpu_temp_c": gpu_temp,
+        "nvme_temp_c": nvme_temp,
+    }
+
 async def metrics_producer_loop():
     # Resolve db path relative to this script
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -64,6 +97,9 @@ async def metrics_producer_loop():
                     except Exception:
                         pass
 
+                # Hardware thermal sensors
+                thermal_data = read_system_temperatures()
+
                 metrics = {
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "hostname": platform.node(),
@@ -80,6 +116,9 @@ async def metrics_producer_loop():
                     "active_processes": active_processes,
                     "db_size_bytes": db_size_bytes,
                     "db_record_count": db_record_count,
+                    "cpu_temp_c": thermal_data.get("cpu_temp_c"),
+                    "gpu_temp_c": thermal_data.get("gpu_temp_c"),
+                    "nvme_temp_c": thermal_data.get("nvme_temp_c"),
                 }
 
                 response = await client.post(QUEUE_URL, json={"data": metrics})

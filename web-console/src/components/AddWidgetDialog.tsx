@@ -13,6 +13,7 @@ import {
   Plus,
   Radio,
   Server,
+  Thermometer,
   Trash2,
 } from 'lucide-react';
 import {
@@ -69,6 +70,13 @@ export const AVAILABLE_WIDGETS: WidgetItem[] = [
     category: 'Resource',
     description: 'Real-time filesystem read and write throughput speeds',
     icon: Gauge,
+  },
+  {
+    id: 'temperature',
+    name: 'Server Temperature',
+    category: 'Resource',
+    description: 'Hardware thermal sensor readings, CPU die temperature, and dissipation status',
+    icon: Thermometer,
   },
   {
     id: 'database',

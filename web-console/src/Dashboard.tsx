@@ -29,6 +29,9 @@ interface MetricData {
   active_processes?: number;
   db_size_bytes?: number;
   db_record_count?: number;
+  cpu_temp_c?: number;
+  gpu_temp_c?: number;
+  nvme_temp_c?: number;
 }
 
 interface QueueStatus {
@@ -63,7 +66,16 @@ export default function Dashboard() {
   const [activeWidgetIds, setActiveWidgetIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem(WIDGETS_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0 && !parsed.includes('temperature')) {
+          const updated = [...parsed, 'temperature'];
+          localStorage.setItem(WIDGETS_STORAGE_KEY, JSON.stringify(updated));
+          return updated;
+        }
+        return parsed;
+      }
+      return [];
     } catch {
       return [];
     }
