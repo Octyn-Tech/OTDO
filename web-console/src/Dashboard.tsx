@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Layers,
   LogOut,
+  Plus,
   RefreshCw,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -172,8 +173,15 @@ export default function Dashboard() {
 
         {/* Overview Page Main Content */}
         <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-          <div className="pb-6">
+          <div className="flex items-center justify-between pb-6">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">System Overview</h1>
+            <Button
+              size="sm"
+              className="h-8 gap-1.5 text-xs font-medium cursor-pointer shadow-sm"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Add Widget</span>
+            </Button>
           </div>
 
           {/* Rest is blank */}
