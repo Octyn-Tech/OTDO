@@ -30,7 +30,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, logout } = useAuth();
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const initials = user?.name ? user.name.slice(0, 2).toUpperCase() : 'OP';
 
@@ -40,12 +40,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       className="border-r border-border/80 bg-black text-foreground selection:bg-primary selection:text-primary-foreground"
       {...props}
     >
-      {/* Brand Header */}
+      {/* Brand Header & Toggle Trigger */}
       <SidebarHeader className="border-b border-border/60 h-16 flex items-center justify-center px-3 group-data-[collapsible=icon]:px-0">
         <div className="flex items-center gap-3 w-full group-data-[collapsible=icon]:justify-center">
-          <div className="h-9 w-9 rounded-lg bg-foreground text-background flex items-center justify-center font-bold shrink-0 shadow-sm">
-            <Server className="h-4.5 w-4.5" />
-          </div>
+          <Tooltip>
+            <TooltipTrigger render={
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                className="h-9 w-9 rounded-lg bg-foreground text-background flex items-center justify-center font-bold shrink-0 shadow-sm hover:opacity-90 active:scale-95 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Server className="h-4.5 w-4.5" />
+              </button>
+            } />
+            <TooltipContent side="right">
+              <span>{isCollapsed ? "Expand sidebar" : "Collapse sidebar"}</span>
+            </TooltipContent>
+          </Tooltip>
           <div className="flex flex-col min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
             <div className="flex items-center gap-1.5">
               <span className="font-semibold text-sm tracking-tight text-foreground truncate">OTDO System</span>

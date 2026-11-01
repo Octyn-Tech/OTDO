@@ -18,7 +18,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from './context/AuthContext';
 
@@ -112,16 +112,12 @@ export default function Dashboard() {
         {/* Top Navbar */}
         <header className="border-b border-border/70 bg-card/40 backdrop-blur sticky top-0 z-30">
           <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            {/* Sidebar Toggle & Context */}
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="h-8 w-8 border border-border text-muted-foreground hover:text-foreground" />
-              <Separator orientation="vertical" className="h-5" />
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm tracking-tight">OTDO System, All in One</span>
-                <Badge variant="outline" className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border-border">
-                  v1.0
-                </Badge>
-              </div>
+            {/* Brand Title Context */}
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm tracking-tight">OTDO System, All in One</span>
+              <Badge variant="outline" className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border-border">
+                v1.0
+              </Badge>
             </div>
 
             {/* Center Connection Status */}
