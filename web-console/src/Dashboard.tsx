@@ -20,6 +20,15 @@ interface MetricData {
   cpu_usage: number;
   memory_usage: number;
   disk_usage: number;
+  net_sent_kb?: number;
+  net_recv_kb?: number;
+  disk_read_kb?: number;
+  disk_write_kb?: number;
+  uptime_seconds?: number;
+  load_avg_1m?: number;
+  active_processes?: number;
+  db_size_bytes?: number;
+  db_record_count?: number;
 }
 
 interface QueueStatus {

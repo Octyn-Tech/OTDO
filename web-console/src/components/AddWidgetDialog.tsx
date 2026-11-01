@@ -1,11 +1,15 @@
 import React from 'react';
 import {
   Activity,
+  ArrowDownUp,
   Check,
+  Clock,
   Cpu,
   Database,
+  Gauge,
   HardDrive,
   Layers,
+  Network,
   Plus,
   Radio,
   Server,
@@ -53,6 +57,34 @@ export const AVAILABLE_WIDGETS: WidgetItem[] = [
     icon: HardDrive,
   },
   {
+    id: 'network',
+    name: 'Network I/O Throughput',
+    category: 'Resource',
+    description: 'Real-time network transfer rates (live download and upload speeds)',
+    icon: ArrowDownUp,
+  },
+  {
+    id: 'disk_io',
+    name: 'Disk I/O Throughput',
+    category: 'Resource',
+    description: 'Real-time filesystem read and write throughput speeds',
+    icon: Gauge,
+  },
+  {
+    id: 'database',
+    name: 'Ingestor Database Store',
+    category: 'Diagnostics',
+    description: 'SQLite database disk footprint and total ingested telemetry records',
+    icon: Database,
+  },
+  {
+    id: 'uptime_tasks',
+    name: 'System Uptime & Load',
+    category: 'Diagnostics',
+    description: 'Continuous uptime duration, 1m load average, and active system processes',
+    icon: Clock,
+  },
+  {
     id: 'queue',
     name: 'Queue Service Monitor',
     category: 'Queue',
@@ -64,7 +96,7 @@ export const AVAILABLE_WIDGETS: WidgetItem[] = [
     name: 'Pipeline Architecture',
     category: 'Topology',
     description: 'Real-time daemon coordinator and microservices pipeline status grid',
-    icon: Database,
+    icon: Server,
   },
   {
     id: 'node',
@@ -208,4 +240,3 @@ export function AddWidgetDialog({
     </Dialog>
   );
 }
-
