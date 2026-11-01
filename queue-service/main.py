@@ -17,16 +17,19 @@ app.add_middleware(
 
 # Our in-memory queue (the core of our Mini-Redis)
 QUEUE = asyncio.Queue(maxsize=1000)
+LATEST_METRIC = None
 
 class Message(BaseModel):
     data: dict
 
 @app.post("/push")
 async def push_to_queue(msg: Message):
+    global LATEST_METRIC
     # Equivalent to Redis LPUSH
     if QUEUE.full():
         raise HTTPException(status_code=503, detail="Queue is full")
     await QUEUE.put(msg.data)
+    LATEST_METRIC = msg.data  # Preserve latest telemetry packet for instant dashboard peek
     return {"status": "success", "queue_size": QUEUE.qsize()}
 
 @app.get("/pop")
@@ -41,11 +44,14 @@ async def pop_from_queue():
 @app.get("/peek")
 async def peek_from_queue():
     """View the latest item without popping/removing it"""
-    if QUEUE.empty():
-        return {"data": None}
-    # Inspect the internal queue items without dequeuing
-    items = list(QUEUE._queue)
-    return {"data": items[-1], "queue_size": QUEUE.qsize()}
+    # Return from queue if available, otherwise return cached LATEST_METRIC
+    item = list(QUEUE._queue)[-1] if not QUEUE.empty() else LATEST_METRIC
+    return {"data": item, "queue_size": QUEUE.qsize()}
+
+@app.get("/latest")
+async def get_latest_metric():
+    """Directly fetch the most recently pushed telemetry packet"""
+    return {"data": LATEST_METRIC, "queue_size": QUEUE.qsize()}
 
 @app.get("/status")
 def queue_status():
