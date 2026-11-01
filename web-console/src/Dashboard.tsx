@@ -18,6 +18,8 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from './context/AuthContext';
 
 interface MetricData {
@@ -101,92 +103,93 @@ export default function Dashboard() {
   const initials = user?.name ? user.name.slice(0, 2).toUpperCase() : 'OP';
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary selection:text-primary-foreground">
-      {/* Top Navbar */}
-      <header className="border-b border-border/70 bg-card/40 backdrop-blur sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-foreground text-background flex items-center justify-center font-bold">
-              <Server className="h-4 w-4" />
-            </div>
-            <div>
+    <SidebarProvider defaultOpen={true} className="min-h-screen bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground">
+      {/* Black / Blank Minimalist Sidebar */}
+      <AppSidebar />
+
+      {/* Main Content Area */}
+      <SidebarInset className="bg-background min-h-screen flex flex-col">
+        {/* Top Navbar */}
+        <header className="border-b border-border/70 bg-card/40 backdrop-blur sticky top-0 z-30">
+          <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            {/* Sidebar Toggle & Context */}
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="h-8 w-8 border border-border text-muted-foreground hover:text-foreground" />
+              <Separator orientation="vertical" className="h-5" />
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm tracking-tight">OTDO Telemetry</span>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                <span className="font-semibold text-sm tracking-tight">OTDO System, All in One</span>
+                <Badge variant="outline" className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border-border">
                   v1.0
-                </span>
-              </div>
-              <p className="text-[11px] text-muted-foreground">Distributed Node Monitor</p>
-            </div>
-          </div>
-
-          {/* Center Connection Status */}
-          <div className="hidden md:flex items-center gap-2">
-            <Badge
-              variant={isOnline ? 'outline' : 'destructive'}
-              className="px-2.5 py-1 text-xs font-mono font-medium flex items-center gap-1.5 border-border"
-            >
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse' : 'bg-red-500'
-                }`}
-              />
-              {isOnline ? 'NODE CONNECTED' : 'BACKEND OFFLINE'}
-            </Badge>
-
-            <Badge variant="secondary" className="px-2.5 py-1 text-xs font-mono">
-              <Layers className="h-3 w-3 mr-1 opacity-70" />
-              Queue: {queueInfo.queue_size} / {queueInfo.max_size}
-            </Badge>
-          </div>
-
-          {/* Right User & Actions */}
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleManualRefresh}
-              disabled={isRefreshing}
-              className="h-8 w-8 border-border"
-              title="Refresh telemetry"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`} />
-            </Button>
-
-            <Separator orientation="vertical" className="h-6 mx-0.5" />
-
-            <div className="flex items-center gap-2.5">
-              <Avatar className="h-8 w-8 border border-border">
-                <AvatarFallback className="text-[11px] font-mono bg-muted text-foreground font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="hidden sm:block text-left">
-                <div className="text-xs font-medium leading-none">{user?.name}</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">{user?.role}</div>
+                </Badge>
               </div>
             </div>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={logout}
-              className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
-            >
-              <LogOut className="h-3.5 w-3.5 mr-1" />
-              <span className="hidden sm:inline">Logout</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+            {/* Center Connection Status */}
+            <div className="hidden md:flex items-center gap-2">
+              <Badge
+                variant={isOnline ? 'outline' : 'destructive'}
+                className="px-2.5 py-1 text-xs font-mono font-medium flex items-center gap-1.5 border-border"
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse' : 'bg-red-500'
+                  }`}
+                />
+                {isOnline ? 'NODE CONNECTED' : 'BACKEND OFFLINE'}
+              </Badge>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+              <Badge variant="secondary" className="px-2.5 py-1 text-xs font-mono">
+                <Layers className="h-3 w-3 mr-1 opacity-70" />
+                Queue: {queueInfo.queue_size} / {queueInfo.max_size}
+              </Badge>
+            </div>
+
+            {/* Right User & Actions */}
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className="h-8 w-8 border-border"
+                title="Refresh telemetry"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+
+              <Separator orientation="vertical" className="h-6 mx-0.5" />
+
+              <div className="flex items-center gap-2.5">
+                <Avatar className="h-8 w-8 border border-border">
+                  <AvatarFallback className="text-[11px] font-mono bg-muted text-foreground font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden sm:block text-left">
+                  <div className="text-xs font-medium leading-none">{user?.name}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">{user?.role}</div>
+                </div>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={logout}
+                className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
+              >
+                <LogOut className="h-3.5 w-3.5 mr-1" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
         {/* Section Heading */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
           <div>
-            <h2 className="text-xl font-semibold tracking-tight">System Telemetry Dashboard</h2>
+            <h2 className="text-xl font-semibold tracking-tight">System Telemetry</h2>
             <p className="text-xs text-muted-foreground">
               Real-time resource utilization and message queue ingestion stream
             </p>
@@ -409,6 +412,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </main>
-    </div>
+    </SidebarInset>
+  </SidebarProvider>
   );
 }

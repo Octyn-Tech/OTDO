@@ -46,8 +46,8 @@ export default function Login() {
             <Activity className="h-5 w-5 text-foreground animate-pulse" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">OTDO Telemetry</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Distributed Infrastructure Real-time Console</p>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">OTDO System, All in One</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">Operator Authentication Console</p>
           </div>
         </div>
 

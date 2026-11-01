@@ -1,5 +1,6 @@
 import React from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import Login from './Login';
 import Dashboard from './Dashboard';
 
@@ -11,7 +12,9 @@ function MainRouter() {
 export default function App() {
   return (
     <AuthProvider>
-      <MainRouter />
+      <TooltipProvider delay={0}>
+        <MainRouter />
+      </TooltipProvider>
     </AuthProvider>
   );
 }
