@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
+import { GitCredentialsCard } from '@/components/settings/GitCredentialsCard';
 import { AddWidgetDialog, AVAILABLE_WIDGETS } from '@/components/AddWidgetDialog';
 import {
   WidgetGrid,
@@ -324,6 +325,9 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Git Credentials & Token Store */}
+              <GitCredentialsCard />
+
               <Card className="bg-card border-border shadow-sm">
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2">
