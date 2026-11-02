@@ -61,15 +61,27 @@ interface WidgetGridProps {
   isOnline: boolean;
 }
 
-type WidgetSize = '1x' | '2x' | '4x';
-type ChartStyle = 'bar' | 'wave' | 'radial' | 'blocks';
+export type WidgetSize = '1x' | '2x' | '4x';
+export type ChartStyle = 'bar' | 'wave' | 'radial' | 'blocks';
 
-interface WidgetCustomization {
+export interface WidgetCustomization {
   size: WidgetSize;
   style: ChartStyle;
 }
 
-const CUSTOMIZATIONS_STORAGE_KEY = 'otdo_widget_customizations';
+export const DEFAULT_CUSTOMIZATIONS: Record<string, WidgetCustomization> = {
+  cpu: { size: '1x', style: 'radial' },
+  disk: { size: '1x', style: 'radial' },
+  memory: { size: '1x', style: 'radial' },
+  temperature: { size: '1x', style: 'radial' },
+  disk_io: { size: '2x', style: 'wave' },
+  network: { size: '2x', style: 'wave' },
+  database: { size: '1x', style: 'bar' },
+  uptime_tasks: { size: '1x', style: 'bar' },
+  queue: { size: '1x', style: 'bar' },
+};
+
+export const CUSTOMIZATIONS_STORAGE_KEY = 'otdo_widget_customizations_v2';
 
 function formatSpeed(kb: number = 0): string {
   if (kb >= 1024) {
@@ -110,9 +122,9 @@ export function WidgetGrid({
   const [customizations, setCustomizations] = useState<Record<string, WidgetCustomization>>(() => {
     try {
       const saved = localStorage.getItem(CUSTOMIZATIONS_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : {};
+      return saved ? { ...DEFAULT_CUSTOMIZATIONS, ...JSON.parse(saved) } : DEFAULT_CUSTOMIZATIONS;
     } catch {
-      return {};
+      return DEFAULT_CUSTOMIZATIONS;
     }
   });
 
@@ -347,7 +359,7 @@ export function WidgetGrid({
   const renderWidgetContent = (widgetId: string) => {
     switch (widgetId) {
       case 'cpu': {
-        const style = customizations['cpu']?.style || 'bar';
+        const style = customizations['cpu']?.style || 'radial';
         const size = customizations['cpu']?.size || '1x';
         const cpuVal = metric?.cpu_usage ?? 0;
 
@@ -438,7 +450,7 @@ export function WidgetGrid({
       }
 
       case 'memory': {
-        const style = customizations['memory']?.style || 'bar';
+        const style = customizations['memory']?.style || 'radial';
         const size = customizations['memory']?.size || '1x';
         const memVal = metric?.memory_usage ?? 0;
 
@@ -529,7 +541,7 @@ export function WidgetGrid({
       }
 
       case 'disk': {
-        const style = customizations['disk']?.style || 'bar';
+        const style = customizations['disk']?.style || 'radial';
         const size = customizations['disk']?.size || '1x';
         const diskVal = metric?.disk_usage ?? 0;
 
@@ -620,8 +632,8 @@ export function WidgetGrid({
       }
 
       case 'network': {
-        const style = customizations['network']?.style || 'bar';
-        const size = customizations['network']?.size || '1x';
+        const style = customizations['network']?.style || 'wave';
+        const size = customizations['network']?.size || '2x';
         const recvSpeed = metric?.net_recv_kb || 0;
         const sentSpeed = metric?.net_sent_kb || 0;
 
@@ -729,8 +741,8 @@ export function WidgetGrid({
       }
 
       case 'disk_io': {
-        const style = customizations['disk_io']?.style || 'bar';
-        const size = customizations['disk_io']?.size || '1x';
+        const style = customizations['disk_io']?.style || 'wave';
+        const size = customizations['disk_io']?.size || '2x';
         const readSpeed = metric?.disk_read_kb || 0;
         const writeSpeed = metric?.disk_write_kb || 0;
 
@@ -838,7 +850,7 @@ export function WidgetGrid({
       }
 
       case 'temperature': {
-        const style = customizations['temperature']?.style || 'bar';
+        const style = customizations['temperature']?.style || 'radial';
         const size = customizations['temperature']?.size || '1x';
         const tempVal = metric?.cpu_temp_c ?? 0;
         const gpuTemp = metric?.gpu_temp_c;

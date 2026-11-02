@@ -11,7 +11,11 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { AddWidgetDialog, AVAILABLE_WIDGETS } from '@/components/AddWidgetDialog';
-import { WidgetGrid } from '@/components/widgets/WidgetGrid';
+import {
+  WidgetGrid,
+  DEFAULT_CUSTOMIZATIONS,
+  CUSTOMIZATIONS_STORAGE_KEY,
+} from '@/components/widgets/WidgetGrid';
 import { useAuth } from './context/AuthContext';
 
 interface MetricData {
@@ -39,7 +43,19 @@ interface QueueStatus {
   max_size: number;
 }
 
-const WIDGETS_STORAGE_KEY = 'otdo_active_widgets';
+export const DEFAULT_ACTIVE_WIDGET_IDS = [
+  'cpu',
+  'disk',
+  'memory',
+  'temperature',
+  'disk_io',
+  'network',
+  'database',
+  'uptime_tasks',
+  'queue',
+];
+
+const WIDGETS_STORAGE_KEY = 'otdo_active_widgets_v2';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -68,16 +84,13 @@ export default function Dashboard() {
       const saved = localStorage.getItem(WIDGETS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0 && !parsed.includes('temperature')) {
-          const updated = [...parsed, 'temperature'];
-          localStorage.setItem(WIDGETS_STORAGE_KEY, JSON.stringify(updated));
-          return updated;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
         }
-        return parsed;
       }
-      return [];
+      return DEFAULT_ACTIVE_WIDGET_IDS;
     } catch {
-      return [];
+      return DEFAULT_ACTIVE_WIDGET_IDS;
     }
   });
   const [isAddWidgetOpen, setIsAddWidgetOpen] = useState(false);
@@ -123,6 +136,17 @@ export default function Dashboard() {
     } catch {
       // ignore storage error
     }
+  };
+
+  const handleResetDefault = () => {
+    setActiveWidgetIds(DEFAULT_ACTIVE_WIDGET_IDS);
+    try {
+      localStorage.setItem(WIDGETS_STORAGE_KEY, JSON.stringify(DEFAULT_ACTIVE_WIDGET_IDS));
+      localStorage.setItem(CUSTOMIZATIONS_STORAGE_KEY, JSON.stringify(DEFAULT_CUSTOMIZATIONS));
+    } catch {
+      // ignore storage error
+    }
+    window.location.reload();
   };
 
   const handleRemoveAll = () => {
@@ -276,6 +300,7 @@ export default function Dashboard() {
           onToggleWidget={handleToggleWidget}
           onAddAll={handleAddAll}
           onRemoveAll={handleRemoveAll}
+          onResetDefault={handleResetDefault}
         />
       </SidebarInset>
     </SidebarProvider>

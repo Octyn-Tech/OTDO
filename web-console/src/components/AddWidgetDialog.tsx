@@ -129,6 +129,7 @@ interface AddWidgetDialogProps {
   onToggleWidget: (id: string) => void;
   onAddAll: () => void;
   onRemoveAll: () => void;
+  onResetDefault?: () => void;
 }
 
 export function AddWidgetDialog({
@@ -138,6 +139,7 @@ export function AddWidgetDialog({
   onToggleWidget,
   onAddAll,
   onRemoveAll,
+  onResetDefault,
 }: AddWidgetDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -216,6 +218,16 @@ export function AddWidgetDialog({
         {/* Footer with bulk controls */}
         <DialogFooter className="pt-3 border-t border-border/60 flex items-center justify-between sm:justify-between w-full">
           <div className="flex items-center gap-2">
+            {onResetDefault && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onResetDefault}
+                className="h-8 text-xs border-border hover:bg-muted text-foreground"
+              >
+                Default Layout
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
