@@ -562,3 +562,6 @@ export function TaskYamlModal({
     </Dialog>
   );
 }
+
+export default TaskYamlModal;
+
