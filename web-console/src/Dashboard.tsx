@@ -20,6 +20,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { GitCredentialsCard } from '@/components/settings/GitCredentialsCard';
+import { ProjectsView } from '@/components/projects/ProjectsView';
 import { AddWidgetDialog, AVAILABLE_WIDGETS } from '@/components/AddWidgetDialog';
 import {
   WidgetGrid,
@@ -88,16 +89,16 @@ export default function Dashboard() {
     }
   });
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [currentView, setCurrentView] = useState<'overview' | 'settings'>(() => {
+  const [currentView, setCurrentView] = useState<'overview' | 'projects' | 'settings'>(() => {
     try {
       if (typeof window !== 'undefined') {
         const hash = window.location.hash.replace('#', '');
-        if (hash === 'settings' || hash === 'overview') {
-          return hash as 'overview' | 'settings';
+        if (hash === 'settings' || hash === 'projects' || hash === 'overview') {
+          return hash as 'overview' | 'projects' | 'settings';
         }
         const saved = localStorage.getItem(VIEW_STORAGE_KEY);
-        if (saved === 'settings' || saved === 'overview') {
-          return saved as 'overview' | 'settings';
+        if (saved === 'settings' || saved === 'projects' || saved === 'overview') {
+          return saved as 'overview' | 'projects' | 'settings';
         }
       }
       return 'overview';
@@ -106,7 +107,7 @@ export default function Dashboard() {
     }
   });
 
-  const handleViewChange = (view: 'overview' | 'settings') => {
+  const handleViewChange = (view: 'overview' | 'projects' | 'settings') => {
     setCurrentView(view);
     try {
       localStorage.setItem(VIEW_STORAGE_KEY, view);
@@ -121,8 +122,8 @@ export default function Dashboard() {
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'settings' || hash === 'overview') {
-        setCurrentView(hash as 'overview' | 'settings');
+      if (hash === 'settings' || hash === 'projects' || hash === 'overview') {
+        setCurrentView(hash as 'overview' | 'projects' | 'settings');
       }
     };
     window.addEventListener('hashchange', handleHash);
@@ -313,7 +314,7 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {currentView === 'overview' ? (
+        {currentView === 'overview' && (
           /* Overview Page Main Content */
           <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
             <div className="flex items-center justify-between pb-2 border-b border-border/40">
@@ -343,7 +344,17 @@ export default function Dashboard() {
               isOnline={isOnline}
             />
           </main>
-        ) : (
+        )}
+
+        {currentView === 'projects' && (
+          /* Projects Page Main Content */
+          <ProjectsView
+            onNavigateToOverview={() => handleViewChange('overview')}
+            onNavigateToSettings={() => handleViewChange('settings')}
+          />
+        )}
+
+        {currentView === 'settings' && (
           /* Settings Page Main Content */
           <main className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
             <div className="flex items-center justify-between pb-2 border-b border-border/40">

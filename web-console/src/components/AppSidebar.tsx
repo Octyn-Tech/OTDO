@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  FolderGit2,
   LayoutDashboard,
   Server,
   Settings,
@@ -25,8 +26,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useAuth } from '@/context/AuthContext';
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  currentView?: 'overview' | 'settings';
-  onViewChange?: (view: 'overview' | 'settings') => void;
+  currentView?: 'overview' | 'projects' | 'settings';
+  onViewChange?: (view: 'overview' | 'projects' | 'settings') => void;
 }
 
 export function AppSidebar({
@@ -91,6 +92,18 @@ export function AppSidebar({
                 >
                   <LayoutDashboard className="h-4 w-4 shrink-0" />
                   <span className="group-data-[collapsible=icon]:hidden">Overview</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem className="flex justify-center">
+                <SidebarMenuButton
+                  isActive={currentView === 'projects'}
+                  tooltip="Projects"
+                  onClick={() => onViewChange?.('projects')}
+                  className="font-medium text-xs rounded-lg transition-colors group-data-[collapsible=icon]:justify-center"
+                >
+                  <FolderGit2 className="h-4 w-4 shrink-0" />
+                  <span className="group-data-[collapsible=icon]:hidden">Projects</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
