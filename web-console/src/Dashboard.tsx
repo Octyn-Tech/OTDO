@@ -21,6 +21,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { GitCredentialsCard } from '@/components/settings/GitCredentialsCard';
 import { ProjectsView } from '@/components/projects/ProjectsView';
+import { TasksView } from '@/components/tasks/TasksView';
 import { AddWidgetDialog, AVAILABLE_WIDGETS } from '@/components/AddWidgetDialog';
 import {
   WidgetGrid,
@@ -89,16 +90,16 @@ export default function Dashboard() {
     }
   });
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [currentView, setCurrentView] = useState<'overview' | 'projects' | 'settings'>(() => {
+  const [currentView, setCurrentView] = useState<'overview' | 'projects' | 'tasks' | 'settings'>(() => {
     try {
       if (typeof window !== 'undefined') {
         const hash = window.location.hash.replace('#', '');
-        if (hash === 'settings' || hash === 'projects' || hash === 'overview') {
-          return hash as 'overview' | 'projects' | 'settings';
+        if (hash === 'settings' || hash === 'projects' || hash === 'tasks' || hash === 'overview') {
+          return hash as 'overview' | 'projects' | 'tasks' | 'settings';
         }
         const saved = localStorage.getItem(VIEW_STORAGE_KEY);
-        if (saved === 'settings' || saved === 'projects' || saved === 'overview') {
-          return saved as 'overview' | 'projects' | 'settings';
+        if (saved === 'settings' || saved === 'projects' || saved === 'tasks' || saved === 'overview') {
+          return saved as 'overview' | 'projects' | 'tasks' | 'settings';
         }
       }
       return 'overview';
@@ -107,7 +108,7 @@ export default function Dashboard() {
     }
   });
 
-  const handleViewChange = (view: 'overview' | 'projects' | 'settings') => {
+  const handleViewChange = (view: 'overview' | 'projects' | 'tasks' | 'settings') => {
     setCurrentView(view);
     try {
       localStorage.setItem(VIEW_STORAGE_KEY, view);
@@ -122,8 +123,8 @@ export default function Dashboard() {
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'settings' || hash === 'projects' || hash === 'overview') {
-        setCurrentView(hash as 'overview' | 'projects' | 'settings');
+      if (hash === 'settings' || hash === 'projects' || hash === 'tasks' || hash === 'overview') {
+        setCurrentView(hash as 'overview' | 'projects' | 'tasks' | 'settings');
       }
     };
     window.addEventListener('hashchange', handleHash);
@@ -350,6 +351,13 @@ export default function Dashboard() {
           /* Projects Page Main Content */
           <ProjectsView
             onNavigateToOverview={() => handleViewChange('overview')}
+            onNavigateToSettings={() => handleViewChange('settings')}
+          />
+        )}
+
+        {currentView === 'tasks' && (
+          /* Tasks & Pipelines Main Content */
+          <TasksView
             onNavigateToSettings={() => handleViewChange('settings')}
           />
         )}

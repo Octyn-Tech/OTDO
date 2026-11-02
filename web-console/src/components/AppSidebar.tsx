@@ -5,6 +5,7 @@ import {
   Server,
   Settings,
   LogOut,
+  ListChecks,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -26,8 +27,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useAuth } from '@/context/AuthContext';
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  currentView?: 'overview' | 'projects' | 'settings';
-  onViewChange?: (view: 'overview' | 'projects' | 'settings') => void;
+  currentView?: 'overview' | 'projects' | 'tasks' | 'settings';
+  onViewChange?: (view: 'overview' | 'projects' | 'tasks' | 'settings') => void;
 }
 
 export function AppSidebar({
@@ -104,6 +105,18 @@ export function AppSidebar({
                 >
                   <FolderGit2 className="h-4 w-4 shrink-0" />
                   <span className="group-data-[collapsible=icon]:hidden">Projects</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem className="flex justify-center">
+                <SidebarMenuButton
+                  isActive={currentView === 'tasks'}
+                  tooltip="Tasks"
+                  onClick={() => onViewChange?.('tasks')}
+                  className="font-medium text-xs rounded-lg transition-colors group-data-[collapsible=icon]:justify-center"
+                >
+                  <ListChecks className="h-4 w-4 shrink-0" />
+                  <span className="group-data-[collapsible=icon]:hidden">Tasks</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
