@@ -66,6 +66,7 @@ export const DEFAULT_ACTIVE_WIDGET_IDS = [
 ];
 
 const WIDGETS_STORAGE_KEY = 'otdo_active_widgets_v2';
+const VIEW_STORAGE_KEY = 'otdo_active_view';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -87,7 +88,46 @@ export default function Dashboard() {
     }
   });
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [currentView, setCurrentView] = useState<'overview' | 'settings'>('overview');
+  const [currentView, setCurrentView] = useState<'overview' | 'settings'>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const hash = window.location.hash.replace('#', '');
+        if (hash === 'settings' || hash === 'overview') {
+          return hash as 'overview' | 'settings';
+        }
+        const saved = localStorage.getItem(VIEW_STORAGE_KEY);
+        if (saved === 'settings' || saved === 'overview') {
+          return saved as 'overview' | 'settings';
+        }
+      }
+      return 'overview';
+    } catch {
+      return 'overview';
+    }
+  });
+
+  const handleViewChange = (view: 'overview' | 'settings') => {
+    setCurrentView(view);
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, view);
+      if (window.location.hash !== `#${view}`) {
+        window.history.replaceState(null, '', `#${view}`);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'settings' || hash === 'overview') {
+        setCurrentView(hash as 'overview' | 'settings');
+      }
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   // Widget management state with localStorage persistence
   const [activeWidgetIds, setActiveWidgetIds] = useState<string[]>(() => {
@@ -218,7 +258,7 @@ export default function Dashboard() {
   return (
     <SidebarProvider defaultOpen={true} className="min-h-screen bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground">
       {/* Black / Blank Minimalist Sidebar */}
-      <AppSidebar currentView={currentView} onViewChange={setCurrentView} />
+      <AppSidebar currentView={currentView} onViewChange={handleViewChange} />
 
       {/* Main Content Area */}
       <SidebarInset className="bg-background min-h-screen flex flex-col">
@@ -316,7 +356,7 @@ export default function Dashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentView('overview')}
+                onClick={() => handleViewChange('overview')}
                 className="h-8 gap-1.5 text-xs border-border"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
