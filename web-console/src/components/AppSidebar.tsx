@@ -2,6 +2,7 @@ import React from 'react';
 import {
   LayoutDashboard,
   Server,
+  Settings,
   LogOut,
 } from 'lucide-react';
 import {
@@ -23,7 +24,16 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/context/AuthContext';
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  currentView?: 'overview' | 'settings';
+  onViewChange?: (view: 'overview' | 'settings') => void;
+}
+
+export function AppSidebar({
+  currentView = 'overview',
+  onViewChange,
+  ...props
+}: AppSidebarProps) {
   const { user, logout } = useAuth();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
@@ -64,7 +74,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
 
-      {/* Main Navigation - Only Overview kept for now */}
+      {/* Main Navigation */}
       <SidebarContent className="px-2 py-4 group-data-[collapsible=icon]:px-1.5 space-y-2">
         <SidebarGroup className="p-0">
           <SidebarGroupLabel className="text-[10px] font-mono tracking-wider text-muted-foreground/60 uppercase px-2 mb-1.5 group-data-[collapsible=icon]:hidden">
@@ -74,12 +84,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu className="gap-1">
               <SidebarMenuItem className="flex justify-center">
                 <SidebarMenuButton
-                  isActive
+                  isActive={currentView === 'overview'}
                   tooltip="Overview"
+                  onClick={() => onViewChange?.('overview')}
                   className="font-medium text-xs rounded-lg transition-colors group-data-[collapsible=icon]:justify-center"
                 >
                   <LayoutDashboard className="h-4 w-4 shrink-0" />
                   <span className="group-data-[collapsible=icon]:hidden">Overview</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem className="flex justify-center">
+                <SidebarMenuButton
+                  isActive={currentView === 'settings'}
+                  tooltip="Settings"
+                  onClick={() => onViewChange?.('settings')}
+                  className="font-medium text-xs rounded-lg transition-colors group-data-[collapsible=icon]:justify-center"
+                >
+                  <Settings className="h-4 w-4 shrink-0" />
+                  <span className="group-data-[collapsible=icon]:hidden">Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

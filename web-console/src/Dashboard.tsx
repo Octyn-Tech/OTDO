@@ -1,13 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+  ArrowLeft,
+  Check,
+  Database,
+  Layers,
+  LayoutDashboard,
   LogOut,
   Plus,
   RefreshCw,
+  Server,
+  Settings,
+  Sliders,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { AddWidgetDialog, AVAILABLE_WIDGETS } from '@/components/AddWidgetDialog';
@@ -77,6 +86,7 @@ export default function Dashboard() {
     }
   });
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [currentView, setCurrentView] = useState<'overview' | 'settings'>('overview');
 
   // Widget management state with localStorage persistence
   const [activeWidgetIds, setActiveWidgetIds] = useState<string[]>(() => {
@@ -207,7 +217,7 @@ export default function Dashboard() {
   return (
     <SidebarProvider defaultOpen={true} className="min-h-screen bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground">
       {/* Black / Blank Minimalist Sidebar */}
-      <AppSidebar />
+      <AppSidebar currentView={currentView} onViewChange={setCurrentView} />
 
       {/* Main Content Area */}
       <SidebarInset className="bg-background min-h-screen flex flex-col">
@@ -262,35 +272,122 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Overview Page Main Content */}
-        <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-          <div className="flex items-center justify-between pb-2 border-b border-border/40">
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight text-foreground">System Overview</h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Customizable real-time resource monitor and telemetry widgets
-              </p>
+        {currentView === 'overview' ? (
+          /* Overview Page Main Content */
+          <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+            <div className="flex items-center justify-between pb-2 border-b border-border/40">
+              <div>
+                <h1 className="text-xl font-semibold tracking-tight text-foreground">System Overview</h1>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Customizable real-time resource monitor and telemetry widgets
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => setIsAddWidgetOpen(true)}
+                className="h-8 gap-1.5 text-xs font-medium cursor-pointer shadow-sm"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Widget</span>
+              </Button>
             </div>
-            <Button
-              size="sm"
-              onClick={() => setIsAddWidgetOpen(true)}
-              className="h-8 gap-1.5 text-xs font-medium cursor-pointer shadow-sm"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Add Widget</span>
-            </Button>
-          </div>
 
-          {/* Dynamic Widget Grid Canvas */}
-          <WidgetGrid
-            activeWidgetIds={activeWidgetIds}
-            onReorder={handleReorder}
-            onOpenAddModal={() => setIsAddWidgetOpen(true)}
-            metric={latestMetric}
-            queueInfo={queueInfo}
-            isOnline={isOnline}
-          />
-        </main>
+            {/* Dynamic Widget Grid Canvas */}
+            <WidgetGrid
+              activeWidgetIds={activeWidgetIds}
+              onReorder={handleReorder}
+              onOpenAddModal={() => setIsAddWidgetOpen(true)}
+              metric={latestMetric}
+              queueInfo={queueInfo}
+              isOnline={isOnline}
+            />
+          </main>
+        ) : (
+          /* Settings Page Main Content */
+          <main className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+            <div className="flex items-center justify-between pb-2 border-b border-border/40">
+              <div>
+                <h1 className="text-xl font-semibold tracking-tight text-foreground">Settings</h1>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Node configuration, telemetry pipeline endpoints, and console preferences
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentView('overview')}
+                className="h-8 gap-1.5 text-xs border-border"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Back to Overview</span>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="bg-card border-border shadow-sm">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <Server className="h-4 w-4 text-foreground" />
+                    <CardTitle className="text-sm font-semibold">Microservices & Telemetry</CardTitle>
+                  </div>
+                  <CardDescription className="text-xs">Active daemon background processes</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 font-mono text-xs">
+                  <div className="flex justify-between items-center py-1.5 border-b border-border/40">
+                    <span className="text-muted-foreground font-sans text-xs">Queue Service API</span>
+                    <Badge variant="outline" className="text-emerald-400 border-border text-[10px]">
+                      http://localhost:7000
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-border/40">
+                    <span className="text-muted-foreground font-sans text-xs">Telemetry Sampling</span>
+                    <span className="font-semibold text-foreground">1,000 ms</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-border/40">
+                    <span className="text-muted-foreground font-sans text-xs">Database Engine</span>
+                    <span className="text-foreground">SQLite 3 (WAL mode)</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5">
+                    <span className="text-muted-foreground font-sans text-xs">Ingestor Worker</span>
+                    <Badge variant="outline" className="text-emerald-400 border-border text-[10px]">
+                      Active
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card border-border shadow-sm">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="h-4 w-4 text-foreground" />
+                    <CardTitle className="text-sm font-semibold">Console Layout</CardTitle>
+                  </div>
+                  <CardDescription className="text-xs">Overview canvas and widget presets</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-xs">
+                  <div className="flex justify-between items-center py-1.5 border-b border-border/40">
+                    <span className="text-muted-foreground">Active Widgets</span>
+                    <span className="font-mono font-semibold">{activeWidgetIds.length} widgets pinned</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-border/40">
+                    <span className="text-muted-foreground">Theme Palette</span>
+                    <span className="font-mono text-muted-foreground">Shadcn Pure Black</span>
+                  </div>
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResetDefault}
+                      className="w-full text-xs border-border hover:bg-muted"
+                    >
+                      Reset Overview to Default Layout
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </main>
+        )}
 
         {/* Add Widget Options Modal */}
         <AddWidgetDialog
