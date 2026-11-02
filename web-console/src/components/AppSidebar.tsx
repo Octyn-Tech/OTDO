@@ -1,12 +1,7 @@
 import React from 'react';
 import {
-  Cpu,
-  Database,
-  Layers,
   LayoutDashboard,
   Server,
-  Settings,
-  Terminal,
   LogOut,
 } from 'lucide-react';
 import {
@@ -69,11 +64,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
 
-      {/* Main Navigation */}
+      {/* Main Navigation - Only Overview kept for now */}
       <SidebarContent className="px-2 py-4 group-data-[collapsible=icon]:px-1.5 space-y-2">
         <SidebarGroup className="p-0">
           <SidebarGroupLabel className="text-[10px] font-mono tracking-wider text-muted-foreground/60 uppercase px-2 mb-1.5 group-data-[collapsible=icon]:hidden">
-            Telemetry
+            Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
@@ -85,71 +80,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 >
                   <LayoutDashboard className="h-4 w-4 shrink-0" />
                   <span className="group-data-[collapsible=icon]:hidden">Overview</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem className="flex justify-center">
-                <SidebarMenuButton
-                  tooltip="Queue Service"
-                  className="text-xs text-muted-foreground hover:text-foreground rounded-lg transition-colors group-data-[collapsible=icon]:justify-center"
-                >
-                  <Layers className="h-4 w-4 shrink-0" />
-                  <span className="group-data-[collapsible=icon]:hidden">Queue Service</span>
-                  <Badge variant="outline" className="ml-auto text-[9px] px-1 py-0 h-3.5 border-border/60 text-muted-foreground group-data-[collapsible=icon]:hidden font-mono">
-                    :7000
-                  </Badge>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem className="flex justify-center">
-                <SidebarMenuButton
-                  tooltip="Ingestor Store"
-                  className="text-xs text-muted-foreground hover:text-foreground rounded-lg transition-colors group-data-[collapsible=icon]:justify-center"
-                >
-                  <Database className="h-4 w-4 shrink-0" />
-                  <span className="group-data-[collapsible=icon]:hidden">Ingestor Store</span>
-                  <Badge variant="outline" className="ml-auto text-[9px] px-1 py-0 h-3.5 border-border/60 text-muted-foreground group-data-[collapsible=icon]:hidden font-mono">
-                    SQLite
-                  </Badge>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem className="flex justify-center">
-                <SidebarMenuButton
-                  tooltip="Cluster Nodes"
-                  className="text-xs text-muted-foreground hover:text-foreground rounded-lg transition-colors group-data-[collapsible=icon]:justify-center"
-                >
-                  <Cpu className="h-4 w-4 shrink-0" />
-                  <span className="group-data-[collapsible=icon]:hidden">Cluster Nodes</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup className="p-0 mt-3 group-data-[collapsible=icon]:mt-1">
-          <SidebarGroupLabel className="text-[10px] font-mono tracking-wider text-muted-foreground/60 uppercase px-2 mb-1.5 group-data-[collapsible=icon]:hidden">
-            Operations
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
-              <SidebarMenuItem className="flex justify-center">
-                <SidebarMenuButton
-                  tooltip="System Logs"
-                  className="text-xs text-muted-foreground hover:text-foreground rounded-lg transition-colors group-data-[collapsible=icon]:justify-center"
-                >
-                  <Terminal className="h-4 w-4 shrink-0" />
-                  <span className="group-data-[collapsible=icon]:hidden">System Logs</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem className="flex justify-center">
-                <SidebarMenuButton
-                  tooltip="Daemon Config"
-                  className="text-xs text-muted-foreground hover:text-foreground rounded-lg transition-colors group-data-[collapsible=icon]:justify-center"
-                >
-                  <Settings className="h-4 w-4 shrink-0" />
-                  <span className="group-data-[collapsible=icon]:hidden">Daemon Config</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
