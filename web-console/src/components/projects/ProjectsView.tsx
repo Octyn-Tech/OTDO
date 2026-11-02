@@ -11,6 +11,8 @@ import {
   FolderPlus,
   ShieldCheck,
   Activity,
+  Key,
+  Workflow,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,6 +28,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { GIT_CREDENTIALS_STORAGE_KEY, GitCredentials } from '@/components/settings/GitCredentialsCard';
+import { ProjectSecretsDialog, getProjectSecrets } from './ProjectSecretsDialog';
+import { ProjectWorkflowDialog, getProjectTasks } from './ProjectWorkflowDialog';
 
 export interface ProjectItem {
   id: string;
@@ -81,6 +85,12 @@ export function ProjectsView({ onNavigateToOverview, onNavigateToSettings }: Pro
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [gitUsername, setGitUsername] = useState<string | null>(null);
+
+  // Active dialog states for secrets and workflows
+  const [selectedSecretsProject, setSelectedSecretsProject] = useState<ProjectItem | null>(null);
+  const [selectedWorkflowProject, setSelectedWorkflowProject] = useState<ProjectItem | null>(null);
+  const [secretsCounts, setSecretsCounts] = useState<Record<string, number>>({});
+  const [tasksCounts, setTasksCounts] = useState<Record<string, number>>({});
 
   // New Project Form state
   const [newName, setNewName] = useState('');
@@ -281,6 +291,33 @@ export function ProjectsView({ onNavigateToOverview, onNavigateToSettings }: Pro
                 </div>
               </div>
 
+              {/* Quick Workspace Actions: Secrets & Tasks Workflow */}
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedSecretsProject(project)}
+                  className="h-7 px-2 text-[11px] font-mono border-border/80 hover:border-amber-400/50 hover:bg-muted/40 justify-start gap-1.5"
+                  title="Manage Project Secrets"
+                >
+                  <Key className="h-3 w-3 text-amber-400 shrink-0" />
+                  <span className="truncate">Secrets ({secretsCounts[project.id] ?? getProjectSecrets(project.id).length})</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedWorkflowProject(project)}
+                  className="h-7 px-2 text-[11px] font-mono border-border/80 hover:border-cyan-400/50 hover:bg-muted/40 justify-start gap-1.5"
+                  title="View Workflow Tasks"
+                >
+                  <Workflow className="h-3 w-3 text-cyan-400 shrink-0" />
+                  <span className="truncate">Tasks ({tasksCounts[project.id] ?? getProjectTasks(project.id).length})</span>
+                </Button>
+              </div>
+
               {/* Tags */}
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {project.tags.map((tag) => (
@@ -434,6 +471,27 @@ export function ProjectsView({ onNavigateToOverview, onNavigateToSettings }: Pro
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Project Secrets Management Dialog */}
+      <ProjectSecretsDialog
+        project={selectedSecretsProject}
+        open={Boolean(selectedSecretsProject)}
+        onOpenChange={(open) => !open && setSelectedSecretsProject(null)}
+        onSecretsCountChange={(projId, count) => {
+          setSecretsCounts((prev) => ({ ...prev, [projId]: count }));
+        }}
+      />
+
+      {/* Project Workflow & Tasks Pipeline Dialog */}
+      <ProjectWorkflowDialog
+        project={selectedWorkflowProject}
+        open={Boolean(selectedWorkflowProject)}
+        onOpenChange={(open) => !open && setSelectedWorkflowProject(null)}
+        onTasksCountChange={(projId, count) => {
+          setTasksCounts((prev) => ({ ...prev, [projId]: count }));
+        }}
+      />
     </main>
   );
 }
+
